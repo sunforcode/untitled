@@ -49,9 +49,41 @@ with open(unityFilePath, 'r') as f:
             if result1:
                 unityDic[str] = result1[0]
 
-targetFileDic['PBXShellScriptBuildPhase'] = '\n 2DD6495F1EEE815700B8B792 /* ShellScript */ = {\n\tisa = PBXShellScriptBuildPhase;\nbuildActionMask = 2147483647;\nfiles = (\n);\ninputPaths = (\n);\noutputPaths = (\n);\nrunOnlyForDeploymentPostprocessing = 0;\nshellPath = /bin/sh;\nshellScript = "\\"$PROJECT_DIR/LoadAR/MapFileParser.sh\\" rm -rf \\"$TARGET_BUILD_DIR/$PRODUCT_NAME.app/LoadAR/Data/Raw/QCAR\\"";\n};\n'
+#这里是增加script的节点
+# targetFileDic['PBXShellScriptBuildPhase'] = '\n 2DD6495F1EEE815700B8B792 /* ShellScript */ = {\n\tisa = PBXShellScriptBuildPhase;\nbuildActionMask = 2147483647;\nfiles = (\n);\ninputPaths = (\n);\noutputPaths = (\n);\nrunOnlyForDeploymentPostprocessing = 0;\nshellPath = /bin/sh;\nshellScript = "\\"$PROJECT_DIR/LoadAR/MapFileParser.sh\\" rm -rf \\"$TARGET_BUILD_DIR/$PRODUCT_NAME.app/LoadAR/Data/Raw/QCAR\\"";\n};\n'
+# print(targetFileDic['PBXShellScriptBuildPhase'])
 
-print(targetFileDic['PBXShellScriptBuildPhase'])
+def getProjectIdAndNameDic(fileConterdic:dict):
+    unityProjectIdDic = {}
+    unityProjectString = fileConterdic['PBXProject']
+    targetPattern = re.compile('targets = \(([.\s\S]*?)\);')
+    targetIdPattern = re.compile('([0-9A-F]{24}) /\* (.*) \*/')
+
+    targetResult = targetPattern.findall(unityProjectString)
+    if targetResult:
+        targetIDResult = targetIdPattern.findall(targetResult[0])
+        if targetIDResult:
+            for key in targetIDResult:
+                unityProjectIdDic[key[1]] = key[0]
+ #获取到了targetName 和targetId的字典 {'Unity-iPhone': '1D6058900D05DD3D006BFB54', 'Unity-iPhone Tests': '5623C57217FDCB0800090B9E'}
+        return unityProjectIdDic
+
+#获取unity的targetName 和targetID
+unityProjectDic = getProjectIdAndNameDic(unityDic)
+# print(unityProjectDic)
+
+#获取目标的targetName 和targetID
+targetProjectDic = getProjectIdAndNameDic(targetFileDic)
+# print(targetProjectDic)
+
+
+
+
+
+
+
+
+
 
 resultString = ''
 for key in targetFileDic:
