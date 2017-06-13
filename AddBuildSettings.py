@@ -7,6 +7,9 @@ import tkinter.filedialog
 unityFilePath = '/Users/CharlyZhang/Desktop/XCode/Unity-iPhone.xcodeproj/project.pbxproj'
 targetFilePath = '/Users/CharlyZhang/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj/project.pbxproj'
 
+unityTargetName = 'Unity-iPhone'
+projectTargetName = 'TestPythonUnity'
+
 # target的变量
 targetFileDic = {}
 rootObjectString = ''
@@ -73,14 +76,102 @@ unityProjectDic = getProjectIdAndNameDic(unityDic)
 # print(unityProjectDic)
 
 #获取目标的targetName 和targetID
-targetProjectDic = getProjectIdAndNameDic(targetFileDic)
+targetProjectDic = getProjectIdAndNameDic(targetFileDic, )
 # print(targetProjectDic)
 
+# 获取了需要融合的target的内容的节点
+def getProjectMainIdDictional(fileContentDic, targetNameID):
+    ProjectMainIDDic = {}
+    UnityNativeTargetString = fileContentDic['PBXNativeTarget']
+    NativeTargetPattern = re.compile('([.\s\S]*?)};')
+    UnityBuildSettingListIDPattern = re.compile('buildConfigurationList = ([A-F0-9]{24})')
+    UnityBuildSettingListId = ''
+
+    unityTargetResult = NativeTargetPattern.findall(UnityNativeTargetString)
+    if unityTargetResult:
+        for targetString in unityTargetResult:
+            if targetString.__contains__(targetNameID):
+               buildSettingIdResult = UnityBuildSettingListIDPattern.findall(targetString)
+               if buildSettingIdResult:
+                   UnityBuildSettingListId = buildSettingIdResult[0]
+                   ProjectMainIDDic['buildConfigurationList'] = UnityBuildSettingListId
+    return ProjectMainIDDic
+
+porjectMainDic =  getProjectMainIdDictional(targetFileDic,targetProjectDic[projectTargetName])
+
+unityMainIdDic = getProjectMainIdDictional(unityDic,unityProjectDic[unityTargetName])
+# print(unityMainIdDic)
+
+def projectReleaseAndDebug(filecontentDic,projectMainDic): # filecontent :主分组, projectMainDic 项目的各个主要信息
+    UnityXCConfigurationListString = filecontentDic['XCConfigurationList']
+    ConfigurationListPattern = re.compile('([.\s\S]*?};)')
+    buildConfigurationPattern = re.compile('buildConfigurations = \(([.\s\S]*?)\);')
+    buildNameAndIdPattern = re.compile('([A-F0-9]{24}) /\* ([a-zA-Z]*) \*/')
+    UnityBuildNameAndIdDic = {}
+    ConfiguationResult = ConfigurationListPattern.findall(UnityXCConfigurationListString)
+    if ConfiguationResult:
+        for configuationSingle in  ConfiguationResult:
+            if configuationSingle.__contains__(projectMainDic['buildConfigurationList']):
+                # print(configuationSingle)
+                buildResult =  buildConfigurationPattern.findall(configuationSingle)
+                if buildResult:
+                    for namePair in buildResult[0].split(','):
+                        # print(namePair)
+                        namePairResult = buildNameAndIdPattern.findall(namePair)
+                        if namePairResult:
+                            UnityBuildNameAndIdDic[namePairResult[0][1]] = namePairResult[0][0]
+    return UnityBuildNameAndIdDic
+# {'Release': '1D6058950D05DD3E006BFB54', 'ReleaseForProfiling': '56E860841D67581C00A1AB2B', 'ReleaseForRunning': '56E860811D6757FF00A1AB2B', 'Debug': '1D6058940D05DD3E006BFB54'}
+
+targetDebugDic = projectReleaseAndDebug(targetFileDic,porjectMainDic)
+# print(targetDebugDic)
+unityDebugDic = projectReleaseAndDebug(unityDic,unityMainIdDic)
+# print(unityDebugDic)
+
+def buildSettingKeyValue(filecontentDic,fileDebugDic,buildSettingName):
+    buildSettingString = filecontentDic['XCBuildConfiguration']
+    idAndContentDic = {}
+    buildSettingPattern = re.compile('([A-F0-9]{24})([.\s\S]*?)name = [a-zA-Z]*;\\n[\t]*\};')
+    buildSettingsDicPattern = re.compile('buildSettings = \{([.\s\S]*)\};')
+    buildKeyValuePattern = re.compile('([A-Z_]*) = ([.\s\S]*)')
+    buildSettingPatternResult = buildSettingPattern.findall(buildSettingString)
+    if buildSettingPatternResult :
+        for buildSettingSingle in buildSettingPatternResult:
+            if buildSettingSingle[0].__eq__(fileDebugDic[buildSettingName]):
+                buildSettingResult = buildSettingsDicPattern.findall(buildSettingSingle[1])
+                if buildSettingResult:
+                   for value in buildSettingResult[0].split(';'):
+                        result = buildKeyValuePattern.findall(value)
+                        if result:
+                            vaule1 = result[0][1].replace('(','')
+                            vaule1 = vaule1.replace(')', '')
+                            idAndContentDic[result[0][0]] = vaule1
+                            # print(result[0][0])
+    return  idAndContentDic
+unityBuildSettingDic =  buildSettingKeyValue(unityDic,unityDebugDic,'ReleaseForRunning')
+print(unityBuildSettingDic)
+
+targetBuildSettingDic = buildSettingKeyValue(targetFileDic, targetDebugDic, 'Debug')
+# print(targetBuildSettingDic)
+
+# print(unityBuildSettingDic['GCC_PREFIX_HEADER']) #pch
+# print(unityBuildSettingDic['OTHER_LDFLAGS']) #other link Flags
+# print(unityBuildSettingDic['LD_GENERATE_MAP_FILE']) #write link map file
+# print(unityBuildSettingDic['HEADER_SEARCH_PATHS']) #head search path
+# print(unityBuildSettingDic['LIBRARY_SEARCH_PATHS']) #libra search path
+# print(unityBuildSettingDic['FRAMEWORK_SEARCH_PATHS']) #FrameWork
+# print(unityBuildSettingDic['OTHER_CFLAGS']) #other C flags
+# print(unityBuildSettingDic['GCC_C_LANGUAGE_STANDARD']) #C++ language dialect
+# print(unityBuildSettingDic['CLANG_CXX_LIBRARY']) #C++ standard Library
+# print(unityBuildSettingDic['GCC_ENABLE_CPP_RTTI']) #runtime Type
+# print(unityBuildSettingDic['CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS']) #overriding deprecated Objecet-c methods
+# print(unityBuildSettingDic['GCC_ENABLE_CPP_EXCEPTIONS'])#enable Object-c extensions
+# print(unityBuildSettingDic['GCC_USE_INDIRECT_FUNCTION_CALLS']) #GCC_USE_INDIRECT_FUNCTION_CALLS
+# print(unityBuildSettingDic['UNITY_RUNTIME_VERSION'])#UNITY_RUNTIME_VERSION
+# print(unityBuildSettingDic['UNITY_SCRIPTING_BACKEND'])#UNITY_SCRIPTING_BACKEND
 
 
-
-
-
+#GCC_C_LANGUAGE_STANDARD
 
 
 
