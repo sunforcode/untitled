@@ -112,16 +112,23 @@ def projectReleaseAndDebug(filecontentDic,projectMainDic): # filecontent :主分
     if ConfiguationResult:
         for configuationSingle in  ConfiguationResult:
             if configuationSingle.__contains__(projectMainDic['buildConfigurationList']):
-                # print(configuationSingle)
                 buildResult =  buildConfigurationPattern.findall(configuationSingle)
                 if buildResult:
                     for namePair in buildResult[0].split(','):
-                        # print(namePair)
                         namePairResult = buildNameAndIdPattern.findall(namePair)
                         if namePairResult:
                             UnityBuildNameAndIdDic[namePairResult[0][1]] = namePairResult[0][0]
+            elif configuationSingle.__contains__('PBXProject'):
+                buildResult =  buildConfigurationPattern.findall(configuationSingle)
+                if buildResult:
+                    for namePair in buildResult[0].split(','):
+                        namePairResult = buildNameAndIdPattern.findall(namePair)
+                        if namePairResult:
+                            UnityBuildNameAndIdDic['PBXProject' + namePairResult[0][1]] = namePairResult[0][0]
     return UnityBuildNameAndIdDic
-# {'Release': '1D6058950D05DD3E006BFB54', 'ReleaseForProfiling': '56E860841D67581C00A1AB2B', 'ReleaseForRunning': '56E860811D6757FF00A1AB2B', 'Debug': '1D6058940D05DD3E006BFB54'}
+
+# {'Release': '1D6058950D05DD3E006BFB54', 'ReleaseForProfiling': '56E860841D67581C00A1AB2B', 'ReleaseForRunning': '56E860811D6757FF00A1AB2B', 'Debug': '1D6058940D05DD3E006BFB54', 'PBXProjectRelease': 'C01FCF5008A954540054247B', 'PBXProjectReleaseForProfiling': '56E860831D67581C00A1AB2B', 'PBXProjectReleaseForRunning': '56E860801D6757FF00A1AB2B', 'PBXProjectDebug': 'C01FCF4F08A954540054247B'}
+
 
 targetDebugDic = projectReleaseAndDebug(targetFileDic,porjectMainDic)
 # print(targetDebugDic)
@@ -135,43 +142,177 @@ def buildSettingKeyValue(filecontentDic,fileDebugDic,buildSettingName):
     buildSettingsDicPattern = re.compile('buildSettings = \{([.\s\S]*)\};')
     buildKeyValuePattern = re.compile('([A-Z_]*) = ([.\s\S]*)')
     buildSettingPatternResult = buildSettingPattern.findall(buildSettingString)
+
     if buildSettingPatternResult :
         for buildSettingSingle in buildSettingPatternResult:
+
+            if buildSettingSingle[0].__eq__(fileDebugDic['Debug']):
+                buildSettingResult = buildSettingsDicPattern.findall(buildSettingSingle[1])
+                if buildSettingResult:
+                    for value in buildSettingResult[0].split(';'):
+                        result = buildKeyValuePattern.findall(value)
+                        if result:
+                            vaule1 = result[0][1] #.replace('(', '')
+                            # vaule1 = vaule1.replace(')', '')
+                            idAndContentDic['Debug' + result[0][0]] = vaule1
+
             if buildSettingSingle[0].__eq__(fileDebugDic[buildSettingName]):
                 buildSettingResult = buildSettingsDicPattern.findall(buildSettingSingle[1])
                 if buildSettingResult:
                    for value in buildSettingResult[0].split(';'):
                         result = buildKeyValuePattern.findall(value)
                         if result:
-                            vaule1 = result[0][1].replace('(','')
-                            vaule1 = vaule1.replace(')', '')
-                            idAndContentDic[result[0][0]] = vaule1
-                            # print(result[0][0])
+                            vaule1 = result[0][1] #.replace('(','')
+                            # vaule1 = vaule1.replace(')', '')
+                            idAndContentDic[ buildSettingName+ result[0][0]] = vaule1
+
+            if buildSettingSingle[0].__eq__(fileDebugDic['PBXProject'+ buildSettingName]):
+                buildSettingResult = buildSettingsDicPattern.findall(buildSettingSingle[1])
+                if buildSettingResult:
+                   for value in buildSettingResult[0].split(';'):
+                        result = buildKeyValuePattern.findall(value)
+                        if result:
+                            vaule1 = result[0][1]#.replace('(','')
+                            # vaule1 = vaule1.replace(')', '')
+                            idAndContentDic['PBXProject'+ buildSettingName + result[0][0]] = vaule1
+
+            if buildSettingSingle[0].__eq__(fileDebugDic['PBXProject'+ 'Debug']):
+                buildSettingResult = buildSettingsDicPattern.findall(buildSettingSingle[1])
+                if buildSettingResult:
+                   for value in buildSettingResult[0].split(';'):
+                        result = buildKeyValuePattern.findall(value)
+                        if result:
+                            vaule1 = result[0][1]#.replace('(','')
+                            # vaule1 = vaule1.replace(')', '')
+                            idAndContentDic['PBXProject'+ 'Debug' + result[0][0]] = vaule1
+
+        # tempDic = {}
+        # for key in idAndContentDic:
+        #     if key.__contains__('PBXProjectDebug'):
+        #         str = key[len('PBXProjectDebug'):]
+        #         tempDic[str] = idAndContentDic[key]
+        #
+        # for key in tempDic:
+        #     print(key)
+        #     print(tempDic[key])
     return  idAndContentDic
 unityBuildSettingDic =  buildSettingKeyValue(unityDic,unityDebugDic,'ReleaseForRunning')
-print(unityBuildSettingDic)
+# print(unityBuildSettingDic)
+# buildString = ''
+# for key in unityBuildSettingDic:
+#     pass
+    # print(key)
+    # print(unityBuildSettingDic[key])
 
-targetBuildSettingDic = buildSettingKeyValue(targetFileDic, targetDebugDic, 'Debug')
+
+targetBuildSettingDic = buildSettingKeyValue(targetFileDic, targetDebugDic, 'Release')
 # print(targetBuildSettingDic)
 
-# print(unityBuildSettingDic['GCC_PREFIX_HEADER']) #pch
-# print(unityBuildSettingDic['OTHER_LDFLAGS']) #other link Flags
-# print(unityBuildSettingDic['LD_GENERATE_MAP_FILE']) #write link map file
-# print(unityBuildSettingDic['HEADER_SEARCH_PATHS']) #head search path
-# print(unityBuildSettingDic['LIBRARY_SEARCH_PATHS']) #libra search path
-# print(unityBuildSettingDic['FRAMEWORK_SEARCH_PATHS']) #FrameWork
-# print(unityBuildSettingDic['OTHER_CFLAGS']) #other C flags
-# print(unityBuildSettingDic['GCC_C_LANGUAGE_STANDARD']) #C++ language dialect
-# print(unityBuildSettingDic['CLANG_CXX_LIBRARY']) #C++ standard Library
-# print(unityBuildSettingDic['GCC_ENABLE_CPP_RTTI']) #runtime Type
-# print(unityBuildSettingDic['CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS']) #overriding deprecated Objecet-c methods
-# print(unityBuildSettingDic['GCC_ENABLE_CPP_EXCEPTIONS'])#enable Object-c extensions
-# print(unityBuildSettingDic['GCC_USE_INDIRECT_FUNCTION_CALLS']) #GCC_USE_INDIRECT_FUNCTION_CALLS
-# print(unityBuildSettingDic['UNITY_RUNTIME_VERSION'])#UNITY_RUNTIME_VERSION
-# print(unityBuildSettingDic['UNITY_SCRIPTING_BACKEND'])#UNITY_SCRIPTING_BACKEND
+def UnityKeyValueDic(dic: dict,key:str,buildProjectName:str):
+  if dic.__contains__(buildProjectName + key):
+      return dic[buildProjectName + key]
+  elif   dic.__contains__('Debug'+key):
+      return dic['Debug'+key]
+  elif dic.__contains__('PBXProject'+ buildProjectName + key):
+      return dic['PBXProject'+ buildProjectName + key] #'PBXProject'+ buildSettingName
+  elif dic.__contains__('PBXProject'+ 'Debug' + key):
+      return dic['PBXProject'+ 'Debug' + key]
+  else:
+      return '1111111111111111111'
 
 
-#GCC_C_LANGUAGE_STANDARD
+
+# print( UnityKeyValueDic(unityBuildSettingDic,'GCC_PREFIX_HEADER','ReleaseForRunning'))
+# # print(unityBuildSettingDic['GCC_PREFIX_HEADER']) #pch
+#
+# print( UnityKeyValueDic(unityBuildSettingDic,'OTHER_LDFLAGS','ReleaseForRunning'))
+# # print(unityBuildSettingDic['OTHER_LDFLAGS']) #other link Flags
+#
+# print( UnityKeyValueDic(unityBuildSettingDic,'LD_GENERATE_MAP_FILE','ReleaseForRunning'))
+# # print(unityBuildSettingDic['LD_GENERATE_MAP_FILE']) #write link map file
+#
+# print( UnityKeyValueDic(unityBuildSettingDic,'HEADER_SEARCH_PATHS','ReleaseForRunning'))
+# # print(unityBuildSettingDic['HEADER_SEARCH_PATHS']) #head search path
+#
+# print( UnityKeyValueDic(unityBuildSettingDic,'LIBRARY_SEARCH_PATHS','ReleaseForRunning'))
+# # print(unityBuildSettingDic['LIBRARY_SEARCH_PATHS']) #libra search path
+#
+# print( UnityKeyValueDic(unityBuildSettingDic,'FRAMEWORK_SEARCH_PATHS','ReleaseForRunning'))
+# # print(unityBuildSettingDic['FRAMEWORK_SEARCH_PATHS']) #FrameWork
+#
+# print( UnityKeyValueDic(unityBuildSettingDic,'OTHER_CFLAGS','ReleaseForRunning'))
+# # print(unityBuildSettingDic['OTHER_CFLAGS']) #other C flags
+#
+# print( UnityKeyValueDic(unityBuildSettingDic,'GCC_C_LANGUAGE_STANDARD','ReleaseForRunning'))
+# # print(unityBuildSettingDic['GCC_C_LANGUAGE_STANDARD']) #C++ language dialect
+#
+# print( UnityKeyValueDic(unityBuildSettingDic,'CLANG_CXX_LIBRARY','ReleaseForRunning'))
+# # print(unityBuildSettingDic['CLANG_CXX_LIBRARY']) #C++ standard Library
+#
+# print( UnityKeyValueDic(unityBuildSettingDic,'GCC_ENABLE_CPP_RTTI','ReleaseForRunning'))
+# # # print(unityBuildSettingDic['GCC_ENABLE_CPP_RTTI']) #runtime Type
+#
+# print( UnityKeyValueDic(unityBuildSettingDic,'CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS','ReleaseForRunning'))
+# # print(unityBuildSettingDic['CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS']) #overriding deprecated Objecet-c methods
+#
+# print( UnityKeyValueDic(unityBuildSettingDic,'GCC_ENABLE_CPP_EXCEPTIONS','ReleaseForRunning'))
+# # print(unityBuildSettingDic['GCC_ENABLE_CPP_EXCEPTIONS'])#enable Object-c extensions
+#
+# print( UnityKeyValueDic(unityBuildSettingDic,'GCC_USE_INDIRECT_FUNCTION_CALLS','ReleaseForRunning'))
+# # print(unityBuildSettingDic['GCC_USE_INDIRECT_FUNCTION_CALLS']) #GCC_USE_INDIRECT_FUNCTION_CALLS
+#
+# print( UnityKeyValueDic(unityBuildSettingDic,'UNITY_RUNTIME_VERSION','ReleaseForRunning'))
+# # print(unityBuildSettingDic['UNITY_RUNTIME_VERSION'])#UNITY_RUNTIME_VERSION
+#
+# print( UnityKeyValueDic(unityBuildSettingDic,'UNITY_SCRIPTING_BACKEND','ReleaseForRunning'))
+# # print(unityBuildSettingDic['UNITY_SCRIPTING_BACKEND'])#UNITY_SCRIPTING_BACKEND
+#
+# print( UnityKeyValueDic(unityBuildSettingDic,'GCC_PREFIX_HEADER','ReleaseForRunning'))
+
+
+for key in targetBuildSettingDic:
+    if  key.startswith('Release'):
+        keystr = key[len('Release'):]
+
+#重新构建
+
+buildSettingString = targetFileDic['XCBuildConfiguration']
+buildSettingPattern = re.compile('([A-F0-9]{24}[.\s\S]*?name = [a-zA-Z]*;\\n[\t]*\};)?')
+buildSettingsDicPattern = re.compile('buildSettings = \{([.\s\S]*)\};')
+buildKeyValuePattern = re.compile('([A-Z_]*) = ([.\s\S]*)')
+
+buildString = ''
+
+reWriteBuildSettingResult = buildSettingPattern.findall(buildSettingString)
+if reWriteBuildSettingResult:
+    for reWriteString in reWriteBuildSettingResult:
+        debugString = 'Debug'
+        if reWriteString.__contains__(targetDebugDic[debugString]):
+            # print(reWriteString)
+            debugKeyValueString = ''
+            for keyString in targetBuildSettingDic:
+                if keyString.startswith(debugString):
+                   string = '\t\t\t\t'+keyString[len(debugString):] + ' = ' + targetBuildSettingDic[keyString] + ';' + '\n'
+                   debugKeyValueString +=  string
+                   pass
+            resultWriterStr = reWriteString.split('buildSettings = {')[0] + 'buildSettings = {\n' + debugKeyValueString + '};\n\t\t\t\tname = %s;\n\t\t\t\t\t};'%debugString
+            # print(resultWriterStr)
+            reWriteString = resultWriterStr
+            pass
+        elif reWriteString.__contains__(targetDebugDic['Release']):
+            # print(reWriteString)
+            pass
+        else:
+            # print('----')
+            # print(reWriteString)
+            pass
+        buildString += reWriteString + '\n'
+        # print(buildString)
+    targetFileDic['XCBuildConfiguration'] = buildString
+
+
+
+
 
 
 
@@ -185,6 +326,7 @@ for key in targetFileDic:
 
 resultString = "// !$*UTF8*$!\n{\n\t\tarchiveVersion = 1;\n\tclasses = {\n\t};\n\tobjectVersion = 46;\n\tobjects = {"+resultString + "};\nrootObject = "+rootObjectString+" /* Project object */;\n}"
 with open(targetFilePath, "r+") as testProject:
-    testProject.truncate()
-    testProject.write(resultString)
-    print('success')
+    # testProject.truncate()
+    # testProject.write(resultString)
+    # print('success')
+    pass
