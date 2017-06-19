@@ -2,14 +2,8 @@ import re
 import string
 import tkinter.filedialog
 
-# filename=tkinter.filedialog.askopenfilename(filetypes=[("bmp格式","avi")])
-
 unityFilePath = '/Users/CharlyZhang/Desktop/XCode/Unity-iPhone.xcodeproj/project.pbxproj'
 targetFilePath = '/Users/CharlyZhang/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj/project.pbxproj'
-# targetFilePath = '/Users/CharlyZhang/Desktop/IosClient/E-Publishing.xcodeproj/project.pbxproj'
-
-# unityFilePath = '/Users/sunyongji/Desktop/staturdayUnity/Unity-iPhone.xcodeproj/project.pbxproj'
-# targetFilePath = '/Users/sunyongji/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj/project.pbxproj'
 
 unityTargetName = 'Unity-iPhone'
 # projectTargetName = 'TestPythonUnity'

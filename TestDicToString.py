@@ -101,14 +101,4 @@ if PBXGroupResult:
 
 # 将文件的内容重新写入文档
 
-for key in targetDic:
-    begin = "/* Begin %s section */"%key
-    end =  "/* End %s section */\n"%key
-    content = targetDic[key]
-    resultString =resultString + begin + content + end
 
-resultString = "// !$*UTF8*$!\n{\n\t\tarchiveVersion = 1;\n\tclasses = {\n\t};objectVersion = 46;\n\tobjects = {\n\t"+resultString + "};\nrootObject = 2DE8B4DD1ED4098300C1959B /* Project object */;\n}"
-with open(targetXcodePath, "r+") as testProject:
-    print(resultString)
-    # testProject.write(resultString)
-    print('success')
