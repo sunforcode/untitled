@@ -7,10 +7,13 @@ import tkinter.filedialog
 unityFilePath = '/Users/CharlyZhang/Desktop/XCode/Unity-iPhone.xcodeproj/project.pbxproj'
 targetFilePath = '/Users/CharlyZhang/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj/project.pbxproj'
 
+unityFilePath = '/Users/sunyongji/Desktop/staturdayUnity/Unity-iPhone.xcodeproj/project.pbxproj'
+targetFilePath = '/Users/sunyongji/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj/project.pbxproj'
+
 # target的变量
 targetFileDic = {}
 rootObjectString = ''
-
+UnityProjectMainGroup = ''
 
 PBXProjectPattern = re.compile('mainGroup = ([a-zA-Z0-9]{24}) ')
 # 打开目标的文件路径并格式化
@@ -103,7 +106,9 @@ with open(unityFilePath, 'r') as f:
                 targetResultString += PBXGroupSingle
             else:
                 targetResultString += PBXGroupSingle
+            targetResultString =  targetResultString.replace('SOURCE_ROOT','\"<group>\"')
             targetFileDic['PBXGroup'] = targetResultString
+
 # 重新写入文件中
 resultString = ''
 for key in targetFileDic:

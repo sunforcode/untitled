@@ -4,9 +4,13 @@ import tkinter.filedialog
 
 # filename=tkinter.filedialog.askopenfilename(filetypes=[("bmp格式","avi")])
 
-unityFilePath = '/Users/CharlyZhang/Desktop/XCode/Unity-iPhone.xcodeproj/project.pbxproj'
+# unityFilePath = '/Users/CharlyZhang/Desktop/XCode/Unity-iPhone.xcodeproj/project.pbxproj'
 # targetFilePath = '/Users/CharlyZhang/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj/project.pbxproj'
-targetFilePath = '/Users/CharlyZhang/Desktop/IosClient/E-Publishing.xcodeproj/project.pbxproj'
+# targetFilePath = '/Users/CharlyZhang/Desktop/IosClient/E-Publishing.xcodeproj/project.pbxproj'
+
+unityFilePath = '/Users/sunyongji/Desktop/staturdayUnity/Unity-iPhone.xcodeproj/project.pbxproj'
+targetFilePath = '/Users/sunyongji/Desktop/FounderAR606cao/E-Publishing.xcodeproj/project.pbxproj'
+
 
 unityTargetName = 'Unity-iPhone'
 # projectTargetName = 'TestPythonUnity'
@@ -285,7 +289,7 @@ UnitybuildSettingLastDic['LIBRARY_SEARCH_PATHS'] = '(\n' + librarySearchString +
 for key in targetBuildSettingDic:
     if  key.startswith('Release'):
         keystr = key[len('Release'):]
-        print(keystr)
+        # print(keystr)
         if keystr in ['OTHER_CFLAGS', 'LIBRARY_SEARCH_PATHS', 'OTHER_LDFLAGS', 'HEADER_SEARCH_PATHS','OTHER_CPLUSPLUSFLAGS', 'USER_HEADER_SEARCH_PATHS']:
             if targetBuildSettingDic[key] == '\"\"':
                 UnitybuildSettingLastDic[keystr] = UnitybuildSettingLastDic[keystr]
@@ -295,13 +299,24 @@ for key in targetBuildSettingDic:
                 tempString = tempString.replace(')', '')
                 tempArray = tempString.split(',')
                 resultString1 = ''
+                resultString1.__contains__("\"\\\"")
+                resultString1.replace("\"\\\"", "\"")
                 for tempString in tempArray:
                     # print(tempString)
-                    resultString1 = resultString1+ ' ' +tempString.strip()
-                UnitybuildSettingLastDic[keystr] = targetBuildSettingDic[key] + resultString1
-                print(UnitybuildSettingLastDic[keystr])
+                    if tempString.__contains__("\"\\\""):
+                        print(tempString)
+                        tempString = tempString.strip()
+                        tempString = tempString[1:]
+                        print(tempString)
+                        tempString = tempString[:-1]
+                        print(tempString)
+                    elif tempString.__contains__("\""):
+                        tempString = tempString.replace("\"", "\\\"")
+                    resultString1 = resultString1+ ' ' +tempString.strip()+' '
+                UnitybuildSettingLastDic[keystr] = targetBuildSettingDic[key][:-1] + resultString1 + '\"'
+                # print(UnitybuildSettingLastDic[keystr])
             else:
-                # print(keystr)
+            #     print(keystr)
                 tempString = UnitybuildSettingLastDic[keystr].replace('(', '')
                 tempString = tempString.replace(')', '')
                 tempArray = tempString.split(',')
@@ -373,7 +388,7 @@ for key in targetFileDic:
 
 resultString = "// !$*UTF8*$!\n{\n\t\tarchiveVersion = 1;\n\tclasses = {\n\t};\n\tobjectVersion = 46;\n\tobjects = {"+resultString + "};\nrootObject = "+rootObjectString+" /* Project object */;\n}"
 with open(targetFilePath, "r+") as testProject:
-    # testProject.truncate()
-    # testProject.write(resultString)
+    testProject.truncate()
+    testProject.write(resultString)
     print('success')
     pass
