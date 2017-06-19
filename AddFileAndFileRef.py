@@ -112,8 +112,14 @@ if singleFileRefResult:
                         pass
                     elif spiltString.__contains__('path =') and spiltString.__contains__('Classes/Native'):
                         spiltString = 'path = %s'%fileNameResult[0]
-                        # spiltString = spiltString.replace('SOURCE_ROOT','\"<group>\"')
                         pass
+                    elif spiltString.__contains__('path = Libraries/') or spiltString.__contains__('path = \"Libraries/') :
+                        spiltString = 'path = %s' % fileNameResult[0]
+                        pass
+                    elif spiltString.__contains__('path = Classes/'):
+                        spiltString = 'path = %s' % fileNameResult[0]
+                        pass
+
                     resultstring1 = resultstring1+' '+spiltString +';'
                 single = '\t\t'+ resultstring1[:-1] + '\n'
                 single = single.replace('SOURCE_ROOT','\"<group>\"')
