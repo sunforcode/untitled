@@ -12,11 +12,11 @@ targetFilePath = '/Users/CharlyZhang/Desktop/TestPythonUnity/TestPythonUnity.xco
 
 # target的变量
 targetFileDic = {}
+unityDic = {}
 rootObjectString = ''
 UnityProjectMainGroup = ''
 TargetMaingroup = ''
 
-PBXProjectPattern = re.compile('mainGroup = ([A-F0-9]{24})')
 # 打开目标的文件路径并格式化
 with open(targetFilePath, 'r+') as targetFile:
     fileContent = targetFile.read()
@@ -39,7 +39,6 @@ with open(unityFilePath, 'r') as f:
     sectionPattern = '/\* Begin (.*) section \*/'
     UnityPattersn = re.compile(sectionPattern)
     UnityResult = UnityPattersn.findall(UnityFileContent)
-    unityDic = {}
     if UnityResult:
         for str in UnityResult:
             s = '/\* Begin %s section \*/([.\s\S]*)/\* End %s section \*/' % (str, str)
@@ -50,12 +49,14 @@ with open(unityFilePath, 'r') as f:
 
 #处理unityProject
     # unity的主分组
+    PBXProjectPattern = re.compile('mainGroup = ([A-F0-9]{24})')
     UnityMaingroup = ''
     UnityGroupString = ''
     # print(UnityFileContent)
     UnityMainGroupResult = PBXProjectPattern.findall(UnityFileContent)
     if UnityMainGroupResult:
         UnityMaingroup = UnityMainGroupResult[0]
+
 
         # print('UnityMaingroup'+UnityMaingroup)
     # PBXProjectString = targetFileDic['PBXProject']
@@ -83,11 +84,7 @@ with open(unityFilePath, 'r') as f:
             else:
                 UnityGroupString += PBXGroupSingle
         unityDic['PBXGroup'] = UnityGroupString
-#获取主分组
-    rootobjectPattern = re.compile('rootObject = ([a-zA-Z0-9]*) /\*')
-    rootObjectResult = rootobjectPattern.findall(fileContent)
-    if rootObjectResult:
-        rootObjectString = rootObjectResult[0]
+
 # PBXProject 获取主目录的ID 2D9A4B551EDE903E000D8470
     targetResultString = ''
     PBXProjectString = targetFileDic['PBXProject']
