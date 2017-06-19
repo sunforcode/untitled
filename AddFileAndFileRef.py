@@ -4,12 +4,12 @@ import tkinter.filedialog
 
 # filename=tkinter.filedialog.askopenfilename(filetypes=[("bmp格式","avi")])
 
-# unityFilePath = '/Users/CharlyZhang/Desktop/XCode/Unity-iPhone.xcodeproj/project.pbxproj'
-# targetFilePath = '/Users/CharlyZhang/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj/project.pbxproj'
+unityFilePath = '/Users/CharlyZhang/Desktop/XCode/Unity-iPhone.xcodeproj/project.pbxproj'
+targetFilePath = '/Users/CharlyZhang/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj/project.pbxproj'
 # targetFilePath = '/Users/CharlyZhang/Desktop/IosClient/E-Publishing.xcodeproj/project.pbxproj'
 
-unityFilePath = '/Users/sunyongji/Desktop/staturdayUnity/Unity-iPhone.xcodeproj/project.pbxproj'
-targetFilePath = '/Users/sunyongji/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj/project.pbxproj'
+# unityFilePath = '/Users/sunyongji/Desktop/staturdayUnity/Unity-iPhone.xcodeproj/project.pbxproj'
+# targetFilePath = '/Users/sunyongji/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj/project.pbxproj'
 
 unityTargetName = 'Unity-iPhone'
 # projectTargetName = 'TestPythonUnity'
@@ -60,21 +60,72 @@ with open(unityFilePath, 'r') as f:
 unityFileString = unityDic['PBXBuildFile']
 # print(unityFileString)
 
-singleFilePattern = re.compile('([0-9A-F]{24}[.\s\S]*?\};)')
+singleFilePattern = re.compile('([0-9A-F]{24}[.\s\S]*?\};\n)')
+unityBuildFilePattern = re.compile('/\* (.*) in')
 
 singlePatternResult = singleFilePattern.findall(unityFileString)
+fileRefResult = ''
+fileNameBackUpArray = []
 if singlePatternResult:
     for single in singlePatternResult:
         # print(single)
-        pass
+        fileNameResult = unityBuildFilePattern.findall(single)
+        if fileNameResult:
+            # print(fileNameResult[0])
+            if fileNameResult[0].__contains__('.png') or fileNameResult[0].__contains__('.xib') or fileNameResult[0].__contains__('.plist') or fileNameResult[0].__contains__('xcassets') :
+                # print(single)
+                pass
+            else:
+                # fileRefResult = fileRefResult +'\t\t' +single + '\n'
+                fileNameBackUpArray.append(fileNameResult[0])
+                pass
+        fileRefResult = fileRefResult + '\t\t' + single + '\n'
+unityDic['PBXBuildFile'] = fileRefResult
+# print(fileRefResult)
 
-targetFileString = targetFileDic['PBXBuildFile']
-# print(targetFileString)
+unityFileRefence = unityDic['PBXFileReference']
+unityFilerefenceResult = ''
+unityFileRefenceName = re.compile('/\* (.*) \*/')
+pathPattern = re.compile('path = (.*?);')
+singleFileRefResult = singleFilePattern.findall(unityFileRefence)
+if singleFileRefResult:
+    for single in singleFileRefResult:
+        result3 = pathPattern.findall(single)
+        fileNameResult = unityFileRefenceName.findall(single)
+        if fileNameResult:
+            if fileNameResult[0].__contains__('.png') or fileNameResult[0].__contains__('.xib') or fileNameResult[
+                0].__contains__('.plist') or fileNameResult[0].__contains__('xcassets'):
+                single = ''
+                pass
+            else:
+                resultstring1 = ''
+                for spiltString in  single.strip().split(';'):
+                    if spiltString.__contains__('.framework') or spiltString.__contains__('.strings')or spiltString.__contains__('.pch'):
+                        pass
+                    elif spiltString.__contains__('path = Data/Raw/QCAR') or spiltString.__contains__('path = Data') or spiltString.__contains__('path = Data/Raw/Vuforia'):
+                        spiltString = 'path = LoadAR/%s' % spiltString.split('=')[1].strip()
+                        print(spiltString)
+                        pass
+                    elif spiltString.__contains__('.app') :
+                        pass
+                    elif spiltString.__contains__('.dylib') or spiltString.__contains__('ProductName.xctest') or spiltString.__contains__('Unity-iPhone Tests-Info.plist'):
+                        pass
+                    elif spiltString.__contains__('path =') and spiltString.__contains__('Classes/Native'):
+                        spiltString = 'path = %s'%fileNameResult[0]
+                        # spiltString = spiltString.replace('SOURCE_ROOT','\"<group>\"')
+                        pass
+                    resultstring1 = resultstring1+' '+spiltString +';'
+                single = '\t\t'+ resultstring1[:-1] + '\n'
+                single = single.replace('SOURCE_ROOT','\"<group>\"')
+                # print(single)
+                pass
+        unityFilerefenceResult = unityFilerefenceResult + '\t\t'+single + '\n'
+unityDic['PBXFileReference'] = unityFilerefenceResult
 
-targetFileDic['PBXBuildFile'] = targetFileString + unityFileString.replace('SOURCE_ROOT','\"<group>\"')
 
-# print(targetFileDic['PBXBuildFile'])
-targetFileDic['PBXFileReference'] = targetFileDic['PBXFileReference'] + unityDic['PBXFileReference'].replace('SOURCE_ROOT','\"<group>\"')
+targetFileDic['PBXBuildFile'] = targetFileDic['PBXBuildFile'] + unityDic['PBXBuildFile']
+
+targetFileDic['PBXFileReference'] = targetFileDic['PBXFileReference'] + unityDic['PBXFileReference']
 
 resultString = ''
 for key in targetFileDic:

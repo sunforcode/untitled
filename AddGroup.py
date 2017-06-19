@@ -7,15 +7,16 @@ import tkinter.filedialog
 unityFilePath = '/Users/CharlyZhang/Desktop/XCode/Unity-iPhone.xcodeproj/project.pbxproj'
 targetFilePath = '/Users/CharlyZhang/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj/project.pbxproj'
 
-unityFilePath = '/Users/sunyongji/Desktop/staturdayUnity/Unity-iPhone.xcodeproj/project.pbxproj'
-targetFilePath = '/Users/sunyongji/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj/project.pbxproj'
+# unityFilePath = '/Users/sunyongji/Desktop/staturdayUnity/Unity-iPhone.xcodeproj/project.pbxproj'
+# targetFilePath = '/Users/sunyongji/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj/project.pbxproj'
 
 # target的变量
 targetFileDic = {}
 rootObjectString = ''
 UnityProjectMainGroup = ''
+TargetMaingroup = ''
 
-PBXProjectPattern = re.compile('mainGroup = ([a-zA-Z0-9]{24}) ')
+PBXProjectPattern = re.compile('mainGroup = ([A-F0-9]{24})')
 # 打开目标的文件路径并格式化
 with open(targetFilePath, 'r+') as targetFile:
     fileContent = targetFile.read()
@@ -51,10 +52,12 @@ with open(unityFilePath, 'r') as f:
     # unity的主分组
     UnityMaingroup = ''
     UnityGroupString = ''
+    # print(UnityFileContent)
     UnityMainGroupResult = PBXProjectPattern.findall(UnityFileContent)
     if UnityMainGroupResult:
         UnityMaingroup = UnityMainGroupResult[0]
-        # print(UnityMaingroup)
+
+        # print('UnityMaingroup'+UnityMaingroup)
     # PBXProjectString = targetFileDic['PBXProject']
     PBXGroupString = unityDic['PBXGroup']
     PBXGroupPattern = re.compile('([.\s\S]*?};)')
@@ -68,11 +71,15 @@ with open(unityFilePath, 'r') as f:
                 UnityGroupString += PBXGroupSingle
             elif PBXGroupSingle.__contains__('Unity-iPhone Tests'):
                 continue
-            elif PBXGroupSingle.__contains__('Frameworks'):
-                continue
-            elif PBXGroupSingle.__contains__('Products'):
-                continue
-
+            elif PBXGroupSingle.__contains__('/* Libraries */ = {'):
+                PBXGroupSingle = PBXGroupSingle.replace('path = Libraries;','path = LoadAR/Libraries;\n\t\t\t\tname = Libraries;\n')
+                UnityGroupString += PBXGroupSingle
+                pass
+            elif PBXGroupSingle.__contains__('/* Classes */ = {'):
+                PBXGroupSingle = PBXGroupSingle.replace('path = Classes;','path = LoadAR/Classes;\n\t\t\t\tname = Classes;\n')
+                # print(PBXGroupSingle)
+                UnityGroupString += PBXGroupSingle
+                pass
             else:
                 UnityGroupString += PBXGroupSingle
         unityDic['PBXGroup'] = UnityGroupString
@@ -81,33 +88,31 @@ with open(unityFilePath, 'r') as f:
     rootObjectResult = rootobjectPattern.findall(fileContent)
     if rootObjectResult:
         rootObjectString = rootObjectResult[0]
-
 # PBXProject 获取主目录的ID 2D9A4B551EDE903E000D8470
     targetResultString = ''
     PBXProjectString = targetFileDic['PBXProject']
+    # print(PBXProjectString)
     PBXProjectResult = PBXProjectPattern.findall(PBXProjectString)
     if PBXProjectResult:
-        UnityProjectMainGroup = PBXProjectResult[0]
-        # print(UnityProjectMainGroup)
+        TargetMaingroup = PBXProjectResult[0]
     targetFileGroupString = targetFileDic['PBXGroup']
     PBXGroupPattern = re.compile('([.\s\S]*?};)')
     PBXGroupResult = PBXGroupPattern.findall(targetFileGroupString)
     if PBXGroupResult:
         for PBXGroupSingle in PBXGroupResult:
-            # print( PBXGroupSingle.split('\n')[2])
-            # print('-----') 2D9A4B551EDE903E000D8470
-            # print(PBXGroupSingle)
-            containMain = PBXGroupSingle.__contains__(UnityProjectMainGroup)
+            containMain = PBXGroupSingle.__contains__(TargetMaingroup)
             containLoadAR = not PBXGroupSingle.__contains__('LoadAR')
             if (containMain and containLoadAR):
                 # print(UnityMaingroup)
                 PBXGroupSingle = PBXGroupSingle.split('children = (')[0] + 'children = (\n' + '\t\t\t\t'+UnityMaingroup+' /* LoadAR */,' + PBXGroupSingle.split('children = (')[1] + '\n' +unityDic['PBXGroup']
-                print(PBXGroupSingle)
+                # print(PBXGroupSingle)
                 targetResultString += PBXGroupSingle
             else:
                 targetResultString += PBXGroupSingle
-            targetResultString =  targetResultString.replace('SOURCE_ROOT','\"<group>\"')
-            targetFileDic['PBXGroup'] = targetResultString
+                pass
+        targetResultString =  targetResultString.replace('SOURCE_ROOT','\"<group>\"')
+        targetFileDic['PBXGroup'] = targetResultString
+        # print(targetFileDic['PBXGroup'])
 
 # 重新写入文件中
 resultString = ''

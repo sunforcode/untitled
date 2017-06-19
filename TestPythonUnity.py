@@ -14,5 +14,5 @@ def CopyFiles(scr: string,dst: string):
  shutil.copyfile(scr+"/MapFileParser.sh",dst+"/LoadAR/MapFileParser.sh")
  return
 
-CopyFiles('/Users/sunyongji/Desktop/staturdayUnity','/Users/sunyongji/Desktop/TestPythonUnity')
-
+# CopyFiles('/Users/sunyongji/Desktop/staturdayUnity','/Users/sunyongji/Desktop/TestPythonUnity')
+CopyFiles('/Users/CharlyZhang/Desktop/XCode','/Users/CharlyZhang/Desktop/TestPythonUnity')
