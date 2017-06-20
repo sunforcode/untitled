@@ -4,10 +4,25 @@ import tkinter.filedialog
 
 # filename=tkinter.filedialog.askopenfilename(filetypes=[("bmp格式","avi")])
 
-unityFilePath = '/Users/CharlyZhang/Desktop/605-003/Unity-iPhone.xcodeproj/project.pbxproj'
-targetFilePath = '/Users/CharlyZhang/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj/project.pbxproj'
-targetName = 'TestPythonUnity'
 
+unityPath = '/Users/CharlyZhang/Desktop/XCode/Unity-iPhone.xcodeproj'
+targetPath = '/Users/CharlyZhang/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj'
+
+targetName = 'TestPythonUnity'
+# targetPath = '/Users/sunyongji/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj'
+# unityPath = '/Users/sunyongji/Desktop/staturdayUnity/Unity-iPhone.xcodeproj'
+
+
+
+unityFilePath = unityPath + '/project.pbxproj'
+targetFilePath = targetPath + '/project.pbxproj'
+
+targetProjectName = 'TestPythonUnity'
+unityProjectName = 'Unity-iPhone'
+unityTargetName = 'Unity-iPhone'
+projectTargetName = 'TestPythonUnity'
+
+targetName = 'TestPythonUnity'
 # target的变量
 targetFileDic = {}
 rootObjectString = ''
@@ -49,81 +64,161 @@ if rootObjectResult:
     rootObjectString = rootObjectResult[0]
 # print(rootObjectString)
 
+shellScriptPattern = re.compile('([0-9A-F]{24} /\* ShellScript \*/,)')
+unityNativeTargetString = unityDic['PBXNativeTarget']
+shellScriptString = shellScriptPattern.findall(unityNativeTargetString)[0]
+
+
 targetPBXNativeString = targetFileDic['PBXNativeTarget']
 # print(targetPBXNativeString)
 NativeTargetDic = {}
-NativeTargetPattern = re.compile('([.\s\S]*?)};')
-NativeTargetNamePattern = re.compile('name = ([a-zA-Z]*)')
+resultStringLast = ''
+NativeTargetPattern = re.compile('([.\s\S]*?};)')
+NativeTargetNamePattern = re.compile('name = ([a-zA-Z]*);')
 NativeTargetBuildPattern = re.compile('buildPhases = \(([.\s\S]*?)\);')
 NativeTargetDicPattern = re.compile('([A-F0-9]{24}) /\* ([a-zA-Z-]*?) \*/,')
 NativeTargetResult = NativeTargetPattern.findall(targetPBXNativeString)
 if NativeTargetResult:
-    # print(NativeTargetResult[0] + '---\n'+ NativeTargetResult[1])
     for singleString in NativeTargetResult :
         result = NativeTargetNamePattern.findall(singleString)
         if result :
             if result[0] == targetName:
+                print(result[0]+'===' +targetName)
                 buildResult = NativeTargetBuildPattern.findall(singleString)
                 if buildResult:
-                   # print(buildResult[0])
+                   for singleTarget in buildResult[0].split(','):
+                        if singleTarget.__contains__('ShellScript'):
+                            singleString = singleString.replace(singleTarget+',','')
+
                    dicResult = NativeTargetDicPattern.findall(buildResult[0])
                    if dicResult:
                        for array in dicResult :
                            NativeTargetDic[array[1]] = array[0]
+            singleString = singleString.split('buildPhases = (')[0] + 'buildPhases = (\n' + '\t\t\t\t' + shellScriptString + singleString.split('buildPhases = (')[1] + '\n'
+        resultStringLast += singleString
+# print(resultStringLast)
 
-    print(NativeTargetDic)
+print( NativeTargetDic)
 
-
-
-
-UnityFrameWorkPattern = re.compile('files = \(([.\s\S]*)\);')
+UnityFrameWorkPattern = re.compile('files = \(([.\s\S]*?)\);')
 # target
 TargetFrameworkString = targetFileDic['PBXFrameworksBuildPhase']
 UnityFrameWorkNamePattern = re.compile('/\* ([a-zA-Z\.]*) in Frameworks \*/')
-# print(UnityFrameworkString)
+# print(TargetFrameworkString)
 TargetFrameWorkNameArray = []
-TargetFrameWorkPattern = re.compile('files = \(([.\s\S]*)\);')
+TargetFrameWorkPattern = re.compile('files = \(([.\s\S]*?)\);')
 TargetFrameWorkResult = TargetFrameWorkPattern.findall(TargetFrameworkString)
 TargetFrameWorkNamePattern = re.compile('/\* ([a-zA-Z\.]*) in Frameworks \*/')
 if TargetFrameWorkResult:
+    # print(TargetFrameWorkResult)
     TargetFrameWorkResultArray = TargetFrameWorkResult[0].split(',')
     for sinleTargetFrameWork in TargetFrameWorkResultArray:
         nameTargetResult = UnityFrameWorkNamePattern.findall(sinleTargetFrameWork)
         if nameTargetResult:
             TargetFrameWorkNameArray.append(nameTargetResult[0])
 
-# print(TargetFrameWorkNameArray)
 
 
-#解析Unity的框架
+# 解析Unity的框架
 UnityFrameworkString = unityDic['PBXFrameworksBuildPhase']
-# print(UnityFrameworkString)
 UnityFrameWorkNameArray = []
 UnityFrameWrokFinalString = ''
 frameWorkResult = UnityFrameWorkPattern.findall(UnityFrameworkString)
 if frameWorkResult:
-   frameWorkResultArray = frameWorkResult[0].split(',')
-   for sinleFrameWork in frameWorkResultArray:
-       nameResult = UnityFrameWorkNamePattern.findall(sinleFrameWork)
-       if nameResult:
-           if (nameResult[0] in TargetFrameWorkNameArray):
-               print(sinleFrameWork)
-               # print('---------')
-           # for targetFrameworkName in TargetFrameWorkNameArray:
+    UnityFrameWorkNameArray = frameWorkResult[0].split(',')
 
-               # if  (nameResult[0].__eq__(targetFrameworkName)):
-               #      print(nameResult[0])
-               #      # print(targetFrameworkName)
-               #      break
-               UnityFrameWrokFinalString = UnityFrameWrokFinalString +sinleFrameWork +','
-           UnityFrameWorkNameArray.append(nameResult[0])
-# print(UnityFrameWrokFinalString)
+frameWorkResultString = ''
+frameworkResultLast = ''
+TargetFrameworkString = targetFileDic['PBXFrameworksBuildPhase']
+singleResult = NativeTargetPattern.findall(TargetFrameworkString)
+if singleResult:
+    for single in singleResult:
+        if single.__contains__(NativeTargetDic['Frameworks']):
+            result2 = TargetFrameWorkPattern.findall(single)
+            if result2:
+                for singleFrameWork in result2:
+                    if singleFrameWork in UnityFrameWorkNameArray:
+                        pass
+                    else:
+                        frameWorkResultString = frameWorkResultString+singleFrameWork
+                        pass
+                frameWorkResultString = frameWorkResultString + ','.join(UnityFrameWorkNameArray)
+                single = single.split('files = (')[0] + 'files = (\n' + '\t\t\t\t' + frameWorkResultString + single.split('files = (')[1] + '\n'
+                # print(single)
+        frameworkResultLast += single
+targetFileDic['PBXFrameworksBuildPhase'] = frameworkResultLast
 
-# print(UnityFrameworkString)
-#将内容写进去
-PBXGroupSingle = UnityFrameworkString.split('files = (')[0] + 'files = (\n' + '\t\t\t\t' + UnityFrameWrokFinalString + UnityFrameworkString.split('files = (')[1] + '\n'
-# print(PBXGroupSingle)
-targetFileDic['PBXFrameworksBuildPhase'] = PBXGroupSingle;
+
+
+## 获取unity的resource内容
+unityResourceString = unityDic['PBXResourcesBuildPhase']
+resourceResult = NativeTargetPattern.findall(unityResourceString)
+resourceArrayString = ''
+if resourceResult:
+    resourceResult1 = UnityFrameWorkPattern.findall(resourceResult[0])
+    if resourceResult1:
+         resourceArray = resourceResult1[0].split(',')
+         for single in resourceArray:
+             if single.__contains__('QCAR') or single.__contains__('Vuforia') or single.__contains__('Data'):
+                 resourceArrayString = resourceArrayString+'\t\t\t'+single+','
+
+## 获取target的Resource内容
+targetResouceString = targetFileDic['PBXResourcesBuildPhase']
+resourceResult = NativeTargetPattern.findall(targetResouceString)
+targetResultstring = ''
+targetResultLastString = ''
+if resourceResult:
+    for string in resourceResult:
+        if string.__contains__(NativeTargetDic['Resources']):
+            fileResult = UnityFrameWorkPattern.findall(string)
+            if fileResult:
+                for single in fileResult[0].split(','):
+                    if single.__contains__('QCAR') or single.__contains__('Vuforia') or single.__contains__('Data'):
+                        string = string.replace(single+',','')
+                    elif single.strip() != '' :
+                        targetResultstring = targetResultstring + single +','
+            string  = string.split('files = (')[0] + 'files = (\n' + '\t\t\t\t' + resourceArrayString + string.split('files = (')[1] + '\n'
+        targetResultLastString+=string
+
+targetFileDic['PBXResourcesBuildPhase'] = targetResultLastString
+
+
+##unity的source
+unitySourceString = unityDic['PBXSourcesBuildPhase']
+unitySourceNameArray = []
+unitySourceContentString = ''
+sourceNamePattern = re.compile('/\* (.*?) in Sources \*/')
+sourceStringResult = NativeTargetPattern.findall(unitySourceString)
+if sourceStringResult:
+    sourceFileResult = TargetFrameWorkPattern.findall(sourceStringResult[0])
+    if sourceFileResult:
+        unitySourceContentString = sourceFileResult[0]
+        for single in sourceFileResult[0].split(','):
+            result1 = sourceNamePattern.findall(single)
+            if result1 :
+                unitySourceNameArray.append(result1[0])
+
+## target的source
+targetSourceString = targetFileDic['PBXSourcesBuildPhase']
+targetSourceResult = NativeTargetPattern.findall(targetSourceString)
+targetResultString1 = ''
+if targetSourceResult:
+    for singleResource in targetSourceResult:
+        if singleResource.__contains__(NativeTargetDic['Sources']):
+            targetSourceResult1 = TargetFrameWorkPattern.findall(singleResource)
+            if targetSourceResult1:
+                for singleResource1 in  targetSourceResult1[0].split(','):
+                    if singleResource1 in unitySourceNameArray:
+                        singleResource.replace(singleResource1+',', '')
+                    elif singleResource1.strip() != '':
+                        targetResultString1 = targetResultString1+singleResource1+','
+                # print(targetResultString1)
+targetResultString1 = targetResultString1 +unitySourceContentString
+targetFileDic['PBXSourcesBuildPhase'] = targetResultString1
+
+
+
+
 
 # 重新写入文件中
 resultString = ''

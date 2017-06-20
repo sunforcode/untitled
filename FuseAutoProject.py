@@ -6,8 +6,9 @@ import shutil
 unityPath = '/Users/CharlyZhang/Desktop/XCode/Unity-iPhone.xcodeproj'
 targetPath = '/Users/CharlyZhang/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj'
 
-targetPath = '/Users/sunyongji/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj'
-unityPath = '/Users/sunyongji/Desktop/staturdayUnity/Unity-iPhone.xcodeproj'
+targetName = 'TestPythonUnity'
+# targetPath = '/Users/sunyongji/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj'
+# unityPath = '/Users/sunyongji/Desktop/staturdayUnity/Unity-iPhone.xcodeproj'
 
 
 
@@ -16,7 +17,8 @@ targetFilePath = targetPath + '/project.pbxproj'
 
 targetProjectName = 'TestPythonUnity'
 unityProjectName = 'Unity-iPhone'
-
+unityTargetName = 'Unity-iPhone'
+projectTargetName = 'TestPythonUnity'
 ##备份
 isMakeUpOrRevoke = False #False 重置  True 备份
 def makeBackUpFile(targetFilePath):
@@ -147,6 +149,483 @@ if PBXGroupResult:
             pass
     targetResultString = targetResultString.replace('SOURCE_ROOT', '\"<group>\"')
     targetFileDic['PBXGroup'] = targetResultString
+
+##增加文件
+
+
+unityFileString = unityDic['PBXBuildFile']
+# print(unityFileString)
+
+singleFilePattern = re.compile('([0-9A-F]{24}[.\s\S]*?\};\n)')
+unityBuildFilePattern = re.compile('/\* (.*) in')
+
+singlePatternResult = singleFilePattern.findall(unityFileString)
+fileRefResult = ''
+fileNameBackUpArray = []
+if singlePatternResult:
+    for single in singlePatternResult:
+        # print(single)
+        fileNameResult = unityBuildFilePattern.findall(single)
+        if fileNameResult:
+            # print(fileNameResult[0])
+            if fileNameResult[0].__contains__('.png') or fileNameResult[0].__contains__('.xib') or fileNameResult[0].__contains__('.plist') or fileNameResult[0].__contains__('xcassets') :
+                # print(single)
+                pass
+            else:
+                # fileRefResult = fileRefResult +'\t\t' +single + '\n'
+                fileNameBackUpArray.append(fileNameResult[0])
+                pass
+        fileRefResult = fileRefResult + '\t\t' + single + '\n'
+unityDic['PBXBuildFile'] = fileRefResult
+# print(fileRefResult)
+
+unityFileRefence = unityDic['PBXFileReference']
+unityFilerefenceResult = ''
+unityFileRefenceName = re.compile('/\* (.*) \*/')
+pathPattern = re.compile('path = (.*?);')
+singleFileRefResult = singleFilePattern.findall(unityFileRefence)
+if singleFileRefResult:
+    for single in singleFileRefResult:
+        result3 = pathPattern.findall(single)
+        fileNameResult = unityFileRefenceName.findall(single)
+        if fileNameResult:
+            if fileNameResult[0].__contains__('.png') or fileNameResult[0].__contains__('.xib') or fileNameResult[
+                0].__contains__('.plist') or fileNameResult[0].__contains__('xcassets'):
+                single = ''
+                pass
+            else:
+                resultstring1 = ''
+                for spiltString in  single.strip().split(';'):
+                    if spiltString.__contains__('.framework') or spiltString.__contains__('.strings')or spiltString.__contains__('.pch'):
+                        pass
+                    elif spiltString.__contains__('path = Data/Raw/QCAR') or spiltString.__contains__('path = Data') or spiltString.__contains__('path = Data/Raw/Vuforia'):
+                        spiltString = 'path = LoadAR/%s' % spiltString.split('=')[1].strip()
+                        print(spiltString)
+                        pass
+                    elif spiltString.__contains__('.app') :
+                        pass
+                    elif spiltString.__contains__('.dylib') or spiltString.__contains__('ProductName.xctest') or spiltString.__contains__('Unity-iPhone Tests-Info.plist'):
+                        pass
+                    elif spiltString.__contains__('path =') and spiltString.__contains__('Classes/Native'):
+                        spiltString = 'path = %s'%fileNameResult[0]
+                        pass
+                    elif spiltString.__contains__('path = Libraries/') or spiltString.__contains__('path = \"Libraries/') :
+                        spiltString = 'path = %s' % fileNameResult[0]
+                        pass
+                    elif spiltString.__contains__('path = Classes/'):
+                        spiltString = 'path = %s' % fileNameResult[0]
+                        pass
+
+                    resultstring1 = resultstring1+' '+spiltString +';'
+                single = '\t\t'+ resultstring1[:-1] + '\n'
+                single = single.replace('SOURCE_ROOT','\"<group>\"')
+                # print(single)
+                pass
+        unityFilerefenceResult = unityFilerefenceResult + '\t\t'+single + '\n'
+unityDic['PBXFileReference'] = unityFilerefenceResult
+
+
+targetFileDic['PBXBuildFile'] = targetFileDic['PBXBuildFile'] + unityDic['PBXBuildFile']
+targetFileDic['PBXFileReference'] = targetFileDic['PBXFileReference'] + unityDic['PBXFileReference']
+
+
+##增加frameWork
+targetPBXNativeString = targetFileDic['PBXNativeTarget']
+# print(targetPBXNativeString)
+NativeTargetDic = {}
+NativeTargetPattern = re.compile('([.\s\S]*?};)')
+NativeTargetNamePattern = re.compile('name = ([a-zA-Z]*);')
+NativeTargetBuildPattern = re.compile('buildPhases = \(([.\s\S]*?)\);')
+NativeTargetDicPattern = re.compile('([A-F0-9]{24}) /\* ([a-zA-Z-]*?) \*/,')
+NativeTargetResult = NativeTargetPattern.findall(targetPBXNativeString)
+if NativeTargetResult:
+    for singleString in NativeTargetResult :
+        result = NativeTargetNamePattern.findall(singleString)
+        if result :
+            if result[0] == targetName:
+                buildResult = NativeTargetBuildPattern.findall(singleString)
+                if buildResult:
+                   # print(buildResult[0])
+                   dicResult = NativeTargetDicPattern.findall(buildResult[0])
+                   if dicResult:
+                       for array in dicResult :
+                           NativeTargetDic[array[1]] = array[0]
+
+UnityFrameWorkPattern = re.compile('files = \(([.\s\S]*?)\);')
+# target
+TargetFrameworkString = targetFileDic['PBXFrameworksBuildPhase']
+UnityFrameWorkNamePattern = re.compile('/\* ([a-zA-Z\.]*) in Frameworks \*/')
+# print(TargetFrameworkString)
+TargetFrameWorkNameArray = []
+TargetFrameWorkPattern = re.compile('files = \(([.\s\S]*?)\);')
+TargetFrameWorkResult = TargetFrameWorkPattern.findall(TargetFrameworkString)
+TargetFrameWorkNamePattern = re.compile('/\* ([a-zA-Z\.]*) in Frameworks \*/')
+if TargetFrameWorkResult:
+    # print(TargetFrameWorkResult)
+    TargetFrameWorkResultArray = TargetFrameWorkResult[0].split(',')
+    for sinleTargetFrameWork in TargetFrameWorkResultArray:
+        nameTargetResult = UnityFrameWorkNamePattern.findall(sinleTargetFrameWork)
+        if nameTargetResult:
+            TargetFrameWorkNameArray.append(nameTargetResult[0])
+
+# 解析Unity的框架
+UnityFrameworkString = unityDic['PBXFrameworksBuildPhase']
+UnityFrameWorkNameArray = []
+UnityFrameWrokFinalString = ''
+frameWorkResult = UnityFrameWorkPattern.findall(UnityFrameworkString)
+if frameWorkResult:
+    UnityFrameWorkNameArray = frameWorkResult[0].split(',')
+
+# print(TargetFrameWorkNameArray)
+frameWorkResultString = ''
+frameworkResultLast = ''
+TargetFrameworkString = targetFileDic['PBXFrameworksBuildPhase']
+singleResult = NativeTargetPattern.findall(TargetFrameworkString)
+if singleResult:
+    for single in singleResult:
+        if single.__contains__(NativeTargetDic['Frameworks']):
+            result2 = TargetFrameWorkPattern.findall(single)
+            if result2:
+                for singleFrameWork in result2:
+                    if singleFrameWork in UnityFrameWorkNameArray:
+                        pass
+                    else:
+                        frameWorkResultString = frameWorkResultString+singleFrameWork
+                        pass
+                frameWorkResultString = frameWorkResultString + ','.join(UnityFrameWorkNameArray)
+                single = single.split('files = (')[0] + 'files = (\n' + '\t\t\t\t' + frameWorkResultString + single.split('files = (')[1] + '\n'
+                # print(single)
+        frameworkResultLast += single
+targetFileDic['PBXFrameworksBuildPhase'] = frameworkResultLast
+
+
+
+# ##增加buildSettings
+#
+# def getProjectIdAndNameDic(fileConterdic:dict):
+#     unityProjectIdDic = {}
+#     unityProjectString = fileConterdic['PBXProject']
+#     targetPattern = re.compile('targets = \(([.\s\S]*?)\);')
+#     targetIdPattern = re.compile('([0-9A-F]{24}) /\* (.*) \*/')
+#
+#     targetResult = targetPattern.findall(unityProjectString)
+#     if targetResult:
+#         targetIDResult = targetIdPattern.findall(targetResult[0])
+#         if targetIDResult:
+#             for key in targetIDResult:
+#                 unityProjectIdDic[key[1]] = key[0]
+#  #获取到了targetName 和targetId的字典 {'Unity-iPhone': '1D6058900D05DD3D006BFB54', 'Unity-iPhone Tests': '5623C57217FDCB0800090B9E'}
+#         return unityProjectIdDic
+#
+# #获取unity的targetName 和targetID
+# unityProjectDic = getProjectIdAndNameDic(unityDic)
+# # print(unityProjectDic)
+#
+# #获取目标的targetName 和targetID
+# targetProjectDic = getProjectIdAndNameDic(targetFileDic, )
+# # print(targetProjectDic)
+#
+# # 获取了需要融合的target的内容的节点
+# def getProjectMainIdDictional(fileContentDic, targetNameID):
+#     ProjectMainIDDic = {}
+#     UnityNativeTargetString = fileContentDic['PBXNativeTarget']
+#     NativeTargetPattern = re.compile('([.\s\S]*?)};')
+#     UnityBuildSettingListIDPattern = re.compile('buildConfigurationList = ([A-F0-9]{24})')
+#     UnityBuildSettingListId = ''
+#
+#     unityTargetResult = NativeTargetPattern.findall(UnityNativeTargetString)
+#     if unityTargetResult:
+#         for targetString in unityTargetResult:
+#             if targetString.__contains__(targetNameID):
+#                buildSettingIdResult = UnityBuildSettingListIDPattern.findall(targetString)
+#                if buildSettingIdResult:
+#                    UnityBuildSettingListId = buildSettingIdResult[0]
+#                    ProjectMainIDDic['buildConfigurationList'] = UnityBuildSettingListId
+#     return ProjectMainIDDic
+#
+# porjectMainDic =  getProjectMainIdDictional(targetFileDic,targetProjectDic[projectTargetName])
+#
+# unityMainIdDic = getProjectMainIdDictional(unityDic,unityProjectDic[unityTargetName])
+# # print(unityMainIdDic)
+#
+# def projectReleaseAndDebug(filecontentDic,projectMainDic): # filecontent :主分组, projectMainDic 项目的各个主要信息
+#     UnityXCConfigurationListString = filecontentDic['XCConfigurationList']
+#     ConfigurationListPattern = re.compile('([.\s\S]*?};)')
+#     buildConfigurationPattern = re.compile('buildConfigurations = \(([.\s\S]*?)\);')
+#     buildNameAndIdPattern = re.compile('([A-F0-9]{24}) /\* ([a-zA-Z]*) \*/')
+#     UnityBuildNameAndIdDic = {}
+#     ConfiguationResult = ConfigurationListPattern.findall(UnityXCConfigurationListString)
+#     if ConfiguationResult:
+#         for configuationSingle in  ConfiguationResult:
+#             if configuationSingle.__contains__(projectMainDic['buildConfigurationList']):
+#                 buildResult =  buildConfigurationPattern.findall(configuationSingle)
+#                 if buildResult:
+#                     for namePair in buildResult[0].split(','):
+#                         namePairResult = buildNameAndIdPattern.findall(namePair)
+#                         if namePairResult:
+#                             UnityBuildNameAndIdDic[namePairResult[0][1]] = namePairResult[0][0]
+#             elif configuationSingle.__contains__('PBXProject'):
+#                 buildResult =  buildConfigurationPattern.findall(configuationSingle)
+#                 if buildResult:
+#                     for namePair in buildResult[0].split(','):
+#                         namePairResult = buildNameAndIdPattern.findall(namePair)
+#                         if namePairResult:
+#                             UnityBuildNameAndIdDic['PBXProject' + namePairResult[0][1]] = namePairResult[0][0]
+#     return UnityBuildNameAndIdDic
+#
+# # {'Release': '1D6058950D05DD3E006BFB54', 'ReleaseForProfiling': '56E860841D67581C00A1AB2B', 'ReleaseForRunning': '56E860811D6757FF00A1AB2B', 'Debug': '1D6058940D05DD3E006BFB54', 'PBXProjectRelease': 'C01FCF5008A954540054247B', 'PBXProjectReleaseForProfiling': '56E860831D67581C00A1AB2B', 'PBXProjectReleaseForRunning': '56E860801D6757FF00A1AB2B', 'PBXProjectDebug': 'C01FCF4F08A954540054247B'}
+#
+#
+# targetDebugDic = projectReleaseAndDebug(targetFileDic,porjectMainDic)
+# # print(targetDebugDic)
+# unityDebugDic = projectReleaseAndDebug(unityDic,unityMainIdDic)
+# # print(unityDebugDic)
+#
+# def buildSettingKeyValue(filecontentDic,fileDebugDic,buildSettingName):
+#     buildSettingString = filecontentDic['XCBuildConfiguration']
+#     idAndContentDic = {}
+#     buildSettingPattern = re.compile('([A-F0-9]{24})([.\s\S]*?)name = [a-zA-Z]*;\\n[\t]*\};')
+#     buildSettingsDicPattern = re.compile('buildSettings = \{([.\s\S]*)\};')
+#     buildKeyValuePattern = re.compile('([A-Z_]*) = ([.\s\S]*)')
+#     buildSettingPatternResult = buildSettingPattern.findall(buildSettingString)
+#
+#     if buildSettingPatternResult :
+#         for buildSettingSingle in buildSettingPatternResult:
+#
+#             if buildSettingSingle[0].__eq__(fileDebugDic['Debug']):
+#                 buildSettingResult = buildSettingsDicPattern.findall(buildSettingSingle[1])
+#                 if buildSettingResult:
+#                     for value in buildSettingResult[0].split(';'):
+#                         result = buildKeyValuePattern.findall(value)
+#                         if result:
+#                             vaule1 = result[0][1] #.replace('(', '')
+#                             # vaule1 = vaule1.replace(')', '')
+#                             idAndContentDic['Debug' + result[0][0]] = vaule1
+#
+#             if buildSettingSingle[0].__eq__(fileDebugDic[buildSettingName]):
+#                 buildSettingResult = buildSettingsDicPattern.findall(buildSettingSingle[1])
+#                 if buildSettingResult:
+#                    for value in buildSettingResult[0].split(';'):
+#                         result = buildKeyValuePattern.findall(value)
+#                         if result:
+#                             vaule1 = result[0][1] #.replace('(','')
+#                             # vaule1 = vaule1.replace(')', '')
+#                             idAndContentDic[ buildSettingName+ result[0][0]] = vaule1
+#
+#             if buildSettingSingle[0].__eq__(fileDebugDic['PBXProject'+ buildSettingName]):
+#                 buildSettingResult = buildSettingsDicPattern.findall(buildSettingSingle[1])
+#                 if buildSettingResult:
+#                    for value in buildSettingResult[0].split(';'):
+#                         result = buildKeyValuePattern.findall(value)
+#                         if result:
+#                             vaule1 = result[0][1]#.replace('(','')
+#                             # vaule1 = vaule1.replace(')', '')
+#                             idAndContentDic['PBXProject'+ buildSettingName + result[0][0]] = vaule1
+#
+#             if buildSettingSingle[0].__eq__(fileDebugDic['PBXProject'+ 'Debug']):
+#                 buildSettingResult = buildSettingsDicPattern.findall(buildSettingSingle[1])
+#                 if buildSettingResult:
+#                    for value in buildSettingResult[0].split(';'):
+#                         result = buildKeyValuePattern.findall(value)
+#                         if result:
+#                             vaule1 = result[0][1]#.replace('(','')
+#                             # vaule1 = vaule1.replace(')', '')
+#                             idAndContentDic['PBXProject'+ 'Debug' + result[0][0]] = vaule1
+#
+#         # tempDic = {}
+#         # for key in idAndContentDic:
+#         #     if key.__contains__('PBXProjectDebug'):
+#         #         str = key[len('PBXProjectDebug'):]
+#         #         tempDic[str] = idAndContentDic[key]
+#         #
+#         # for key in tempDic:
+#         #     print(key)
+#         #     print(tempDic[key])
+#     return  idAndContentDic
+# unityBuildSettingDic =  buildSettingKeyValue(unityDic,unityDebugDic,'ReleaseForRunning')
+# # print(unityBuildSettingDic)
+# # buildString = ''
+# # for key in unityBuildSettingDic:
+# #     pass
+#     # print(key)
+#     # print(unityBuildSettingDic[key])
+#
+#
+# targetBuildSettingDic = buildSettingKeyValue(targetFileDic, targetDebugDic, 'Release')
+# # print(targetBuildSettingDic)
+#
+# def UnityKeyValueDic(dic: dict,key:str,buildProjectName:str):
+#   if dic.__contains__(buildProjectName + key):
+#       return dic[buildProjectName + key]
+#   elif   dic.__contains__('Debug'+key):
+#       return dic['Debug'+key]
+#   elif dic.__contains__('PBXProject'+ buildProjectName + key):
+#       return dic['PBXProject'+ buildProjectName + key] #'PBXProject'+ buildSettingName
+#   elif dic.__contains__('PBXProject'+ 'Debug' + key):
+#       return dic['PBXProject'+ 'Debug' + key]
+#   else:
+#       return '1111111111111111111'
+#
+# UnitybuildSettingLastDic = {}
+#
+#
+# UnitybuildSettingLastDic['OTHER_LDFLAGS'] = UnityKeyValueDic(unityBuildSettingDic,'OTHER_LDFLAGS','ReleaseForRunning')
+#
+# UnitybuildSettingLastDic['LD_GENERATE_MAP_FILE'] = UnityKeyValueDic(unityBuildSettingDic,'LD_GENERATE_MAP_FILE','ReleaseForRunning')
+#
+# UnitybuildSettingLastDic['HEADER_SEARCH_PATHS'] = UnityKeyValueDic(unityBuildSettingDic,'HEADER_SEARCH_PATHS','ReleaseForRunning')
+#
+# UnitybuildSettingLastDic['LIBRARY_SEARCH_PATHS'] = UnityKeyValueDic(unityBuildSettingDic,'LIBRARY_SEARCH_PATHS','ReleaseForRunning')
+#
+# UnitybuildSettingLastDic['FRAMEWORK_SEARCH_PATHS'] = UnityKeyValueDic(unityBuildSettingDic,'FRAMEWORK_SEARCH_PATHS','ReleaseForRunning')
+#
+# UnitybuildSettingLastDic['OTHER_CFLAGS'] = UnityKeyValueDic(unityBuildSettingDic,'OTHER_CFLAGS','ReleaseForRunning')
+#
+# UnitybuildSettingLastDic['GCC_C_LANGUAGE_STANDARD'] = UnityKeyValueDic(unityBuildSettingDic,'GCC_C_LANGUAGE_STANDARD','ReleaseForRunning')
+#
+# UnitybuildSettingLastDic['CLANG_CXX_LIBRARY'] = UnityKeyValueDic(unityBuildSettingDic,'CLANG_CXX_LIBRARY','ReleaseForRunning')
+#
+# UnitybuildSettingLastDic['GCC_ENABLE_CPP_RTTI'] = UnityKeyValueDic(unityBuildSettingDic,'GCC_ENABLE_CPP_RTTI','ReleaseForRunning')
+#
+# UnitybuildSettingLastDic['CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS'] = UnityKeyValueDic(unityBuildSettingDic,'CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS','ReleaseForRunning')
+#
+# UnitybuildSettingLastDic['GCC_ENABLE_CPP_EXCEPTIONS'] = UnityKeyValueDic(unityBuildSettingDic,'GCC_ENABLE_CPP_EXCEPTIONS','ReleaseForRunning')
+#
+# UnitybuildSettingLastDic['GCC_USE_INDIRECT_FUNCTION_CALLS'] = UnityKeyValueDic(unityBuildSettingDic,'GCC_USE_INDIRECT_FUNCTION_CALLS','ReleaseForRunning')
+#
+# UnitybuildSettingLastDic['UNITY_RUNTIME_VERSION'] = UnityKeyValueDic(unityBuildSettingDic,'UNITY_RUNTIME_VERSION','ReleaseForRunning')
+#
+# UnitybuildSettingLastDic['UNITY_SCRIPTING_BACKEND'] = UnityKeyValueDic(unityBuildSettingDic,'UNITY_SCRIPTING_BACKEND','ReleaseForRunning')
+#
+# UnitybuildSettingLastDic['OTHER_CPLUSPLUSFLAGS'] = UnityKeyValueDic(unityBuildSettingDic,'OTHER_CPLUSPLUSFLAGS','ReleaseForRunning')
+#
+# # 处理headSearchpath
+# def handleDicValue(handleKey):
+#     headSearchPath = UnitybuildSettingLastDic[handleKey]
+#     headSearchPath = headSearchPath.replace('(','')
+#     headSearchPath = headSearchPath.replace(')','')
+#     headSearchArray = headSearchPath.split(',')
+#     headSearchResult = ''
+#     for headString in headSearchArray :
+#          if headString.__contains__('/'):
+#             array =  headString.split('/')
+#             stringM = ''
+#             for i in range(len(array)):
+#                 if i == 0:
+#                     stringM = array[i] + '/LoadAR'
+#                 else:
+#                     stringM = stringM+'/'+ array[i]
+#             headString = stringM
+#          headSearchResult += headString + ','
+#     return headSearchResult
+#
+# headSearchResult = handleDicValue('HEADER_SEARCH_PATHS')
+# headSearchResult.replace(')','')
+# UnitybuildSettingLastDic['HEADER_SEARCH_PATHS'] = '(\n' +  headSearchResult + ')'
+# UnitybuildSettingLastDic ['USER_HEADER_SEARCH_PATHS'] = '(\n' +  headSearchResult + ')'
+#
+# librarySearchString = handleDicValue('LIBRARY_SEARCH_PATHS')
+# UnitybuildSettingLastDic['LIBRARY_SEARCH_PATHS'] = '(\n' + librarySearchString + ')'
+#
+# for key in targetBuildSettingDic:
+#     if  key.startswith('Release'):
+#         keystr = key[len('Release'):]
+#         # print(keystr)
+#         if keystr in ['OTHER_CFLAGS', 'LIBRARY_SEARCH_PATHS', 'OTHER_LDFLAGS', 'HEADER_SEARCH_PATHS','OTHER_CPLUSPLUSFLAGS', 'USER_HEADER_SEARCH_PATHS']:
+#             if targetBuildSettingDic[key] == '\"\"':
+#                 UnitybuildSettingLastDic[keystr] = UnitybuildSettingLastDic[keystr]
+#                 pass
+#             elif keystr == 'USER_HEADER_SEARCH_PATHS':
+#                 tempString = UnitybuildSettingLastDic[keystr].replace('(', '')
+#                 tempString = tempString.replace(')', '')
+#                 tempArray = tempString.split(',')
+#                 resultString1 = ''
+#                 resultString1.__contains__("\"\\\"")
+#                 resultString1.replace("\"\\\"", "\"")
+#                 for tempString in tempArray:
+#                     # print(tempString)
+#                     if tempString.__contains__("\"\\\""):
+#                         print(tempString)
+#                         tempString = tempString.strip()
+#                         tempString = tempString[1:]
+#                         print(tempString)
+#                         tempString = tempString[:-1]
+#                         print(tempString)
+#                     elif tempString.__contains__("\""):
+#                         tempString = tempString.replace("\"", "\\\"")
+#                     resultString1 = resultString1+ ' ' +tempString.strip()+' '
+#                 UnitybuildSettingLastDic[keystr] = targetBuildSettingDic[key][:-1] + resultString1 + '\"'
+#                 # print(UnitybuildSettingLastDic[keystr])
+#             else:
+#             #     print(keystr)
+#                 tempString = UnitybuildSettingLastDic[keystr].replace('(', '')
+#                 tempString = tempString.replace(')', '')
+#                 tempArray = tempString.split(',')
+#                 tempStringTarget = targetBuildSettingDic[key].replace(')', '')
+#                 tempStringTarget = tempStringTarget.replace('(', '')
+#                 for string1 in tempArray:
+#                     if tempStringTarget.__contains__(string1):
+#                         pass
+#                     else:
+#                         tempStringTarget = tempStringTarget + string1 + ',\n'
+#                 # print(tempStringTarget)
+#                 UnitybuildSettingLastDic[keystr] = '(\n' + tempStringTarget+ '\n' + ')'
+#                 pass
+#         else:
+#             if not (keystr in UnitybuildSettingLastDic):
+#                 pass
+#             else:
+#                 pass
+#
+# for key in  UnitybuildSettingLastDic:
+#     if UnitybuildSettingLastDic[key].__contains__('(\n'):
+#         pass
+#
+# targetBuildSettingDic = UnitybuildSettingLastDic
+# #重新构建
+#
+# buildSettingString = targetFileDic['XCBuildConfiguration']
+# buildSettingPattern = re.compile('([A-F0-9]{24}[.\s\S]*?name = [a-zA-Z]*;\\n[\t]*\};)?')
+# buildSettingsDicPattern = re.compile('buildSettings = \{([.\s\S]*)\};')
+# buildKeyValuePattern = re.compile('([A-Z_]*) = ([.\s\S]*)')
+#
+# buildString = ''
+#
+# reWriteBuildSettingResult = buildSettingPattern.findall(buildSettingString)
+# if reWriteBuildSettingResult:
+#     for reWriteString in reWriteBuildSettingResult:
+#         debugString = 'Debug'
+#         if reWriteString.__contains__(targetDebugDic[debugString]):
+#             debugKeyValueString = ''
+#             for keyString in targetBuildSettingDic:
+#                 if True:
+#                    string = '\t\t\t\t'+keyString[len(''):] + ' = ' + targetBuildSettingDic[keyString] + ';' + '\n'
+#                    debugKeyValueString +=  string
+#                    pass
+#             resultWriterStr = reWriteString.split('buildSettings = {')[0] + 'buildSettings = {\n' + debugKeyValueString + '};\n\t\t\t\tname = %s;\n\t\t\t\t\t};'%debugString
+#             reWriteString = resultWriterStr
+#             pass
+#         elif reWriteString.__contains__(targetDebugDic['Release']):
+#             debugKeyValueString = ''
+#             for keyString in targetBuildSettingDic:
+#                 if True:
+#                     string = '\t\t\t\t' + keyString + ' = ' + targetBuildSettingDic[keyString] + ';' + '\n'
+#                     debugKeyValueString += string
+#                     pass
+#             resultWriterStr = reWriteString.split('buildSettings = {')[0] + 'buildSettings = {\n' + debugKeyValueString + '};\n\t\t\t\tname = %s;\n\t\t\t\t\t};' % 'Release'
+#             reWriteString = resultWriterStr
+#             pass
+#         else:
+#             pass
+#         buildString += reWriteString + '\n'
+#     targetFileDic['XCBuildConfiguration'] = buildString
+
+
+
+
+
+
+
 
 
 
