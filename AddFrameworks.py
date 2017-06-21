@@ -62,11 +62,17 @@ rootobjectPattern = re.compile('rootObject = ([a-zA-Z0-9]*) /\*')
 rootObjectResult = rootobjectPattern.findall(fileContent)
 if rootObjectResult:
     rootObjectString = rootObjectResult[0]
-# print(rootObjectString)
 
+#-------------------------------------------------分割线
+##增加shellScriptPattern
+shellScriptIDPattern = re.compile('[A-Z0-9]{24}')
+shellScriptStringId = ''
 shellScriptPattern = re.compile('([0-9A-F]{24} /\* ShellScript \*/,)')
 unityNativeTargetString = unityDic['PBXNativeTarget']
 shellScriptString = shellScriptPattern.findall(unityNativeTargetString)[0]
+shellScriptStringId = shellScriptIDPattern.findall(shellScriptString)[0]
+print(shellScriptStringId)
+print(shellScriptString)
 
 
 targetPBXNativeString = targetFileDic['PBXNativeTarget']
@@ -83,7 +89,7 @@ if NativeTargetResult:
         result = NativeTargetNamePattern.findall(singleString)
         if result :
             if result[0] == targetName:
-                print(result[0]+'===' +targetName)
+                # print(result[0]+'===' +targetName)
                 buildResult = NativeTargetBuildPattern.findall(singleString)
                 if buildResult:
                    for singleTarget in buildResult[0].split(','):
@@ -96,7 +102,7 @@ if NativeTargetResult:
                            NativeTargetDic[array[1]] = array[0]
             singleString = singleString.split('buildPhases = (')[0] + 'buildPhases = (\n' + '\t\t\t\t' + shellScriptString + singleString.split('buildPhases = (')[1] + '\n'
         resultStringLast += singleString
-# print(resultStringLast)
+targetFileDic['PBXNativeTarget'] = resultStringLast
 
 print( NativeTargetDic)
 
@@ -147,7 +153,7 @@ if singleResult:
                 # print(single)
         frameworkResultLast += single
 targetFileDic['PBXFrameworksBuildPhase'] = frameworkResultLast
-
+# print(frameworkResultLast)
 
 
 ## 获取unity的resource内容
@@ -202,9 +208,11 @@ if sourceStringResult:
 targetSourceString = targetFileDic['PBXSourcesBuildPhase']
 targetSourceResult = NativeTargetPattern.findall(targetSourceString)
 targetResultString1 = ''
+targetSourcelastString = ''
 if targetSourceResult:
     for singleResource in targetSourceResult:
         if singleResource.__contains__(NativeTargetDic['Sources']):
+            # print(singleResource)
             targetSourceResult1 = TargetFrameWorkPattern.findall(singleResource)
             if targetSourceResult1:
                 for singleResource1 in  targetSourceResult1[0].split(','):
@@ -213,11 +221,13 @@ if targetSourceResult:
                     elif singleResource1.strip() != '':
                         targetResultString1 = targetResultString1+singleResource1+','
                 # print(targetResultString1)
-targetResultString1 = targetResultString1 +unitySourceContentString
-targetFileDic['PBXSourcesBuildPhase'] = targetResultString1
+            targetResultString1 = targetResultString1 +unitySourceContentString
+            singleResource = singleResource.split('files = (')[0] + 'files = (\n' + '\t\t\t\t' + targetResultString1 + \
+                             singleResource.split('files = (')[1] + '\n'
+        targetSourcelastString +=singleResource
+targetFileDic['PBXSourcesBuildPhase'] = targetSourcelastString
 
-
-
+targetFileDic['PBXShellScriptBuildPhase'] = '\n %s /* ShellScript */ = {\n\tisa = PBXShellScriptBuildPhase;\nbuildActionMask = 2147483647;\nfiles = (\n);\ninputPaths = (\n);\noutputPaths = (\n);\nrunOnlyForDeploymentPostprocessing = 0;\nshellPath = /bin/sh;\nshellScript = "\\"$PROJECT_DIR/LoadAR/MapFileParser.sh\\" rm -rf \\"$TARGET_BUILD_DIR/$PRODUCT_NAME.app/LoadAR/Data/Raw/QCAR\\"";\n};\n'%shellScriptStringId
 
 
 # 重新写入文件中

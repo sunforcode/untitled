@@ -4,17 +4,15 @@ import tkinter.filedialog
 
 # filename=tkinter.filedialog.askopenfilename(filetypes=[("bmp格式","avi")])
 
-# unityFilePath = '/Users/CharlyZhang/Desktop/XCode/Unity-iPhone.xcodeproj/project.pbxproj'
-# targetFilePath = '/Users/CharlyZhang/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj/project.pbxproj'
-# targetFilePath = '/Users/CharlyZhang/Desktop/IosClient/E-Publishing.xcodeproj/project.pbxproj'
+unityFilePath = '/Users/CharlyZhang/Desktop/XCode/Unity-iPhone.xcodeproj/project.pbxproj'
+targetFilePath = '/Users/CharlyZhang/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj/project.pbxproj'
 
-unityFilePath = '/Users/sunyongji/Desktop/staturdayUnity/Unity-iPhone.xcodeproj/project.pbxproj'
-targetFilePath = '/Users/sunyongji/Desktop/FounderAR606cao/E-Publishing.xcodeproj/project.pbxproj'
+# unityFilePath = '/Users/sunyongji/Desktop/staturdayUnity/Unity-iPhone.xcodeproj/project.pbxproj'
+# targetFilePath = '/Users/sunyongji/Desktop/FounderAR606cao/E-Publishing.xcodeproj/project.pbxproj'
 
 
 unityTargetName = 'Unity-iPhone'
-# projectTargetName = 'TestPythonUnity'
-projectTargetName = 'FounderReader'
+projectTargetName = 'TestPythonUnity'
 # target的变量
 targetFileDic = {}
 rootObjectString = ''
@@ -57,10 +55,9 @@ with open(unityFilePath, 'r') as f:
             if result1:
                 unityDic[str] = result1[0]
 
-#这里是增加script的节点
-# targetFileDic['PBXShellScriptBuildPhase'] = '\n 2DD6495F1EEE815700B8B792 /* ShellScript */ = {\n\tisa = PBXShellScriptBuildPhase;\nbuildActionMask = 2147483647;\nfiles = (\n);\ninputPaths = (\n);\noutputPaths = (\n);\nrunOnlyForDeploymentPostprocessing = 0;\nshellPath = /bin/sh;\nshellScript = "\\"$PROJECT_DIR/LoadAR/MapFileParser.sh\\" rm -rf \\"$TARGET_BUILD_DIR/$PRODUCT_NAME.app/LoadAR/Data/Raw/QCAR\\"";\n};\n'
-# print(targetFileDic['PBXShellScriptBuildPhase'])
 
+
+##分割线-----------------------------------------------------------------------------------------------------------------
 def getProjectIdAndNameDic(fileConterdic:dict):
     unityProjectIdDic = {}
     unityProjectString = fileConterdic['PBXProject']
@@ -190,28 +187,12 @@ def buildSettingKeyValue(filecontentDic,fileDebugDic,buildSettingName):
                             vaule1 = result[0][1]#.replace('(','')
                             # vaule1 = vaule1.replace(')', '')
                             idAndContentDic['PBXProject'+ 'Debug' + result[0][0]] = vaule1
-
-        # tempDic = {}
-        # for key in idAndContentDic:
-        #     if key.__contains__('PBXProjectDebug'):
-        #         str = key[len('PBXProjectDebug'):]
-        #         tempDic[str] = idAndContentDic[key]
-        #
-        # for key in tempDic:
-        #     print(key)
-        #     print(tempDic[key])
     return  idAndContentDic
 unityBuildSettingDic =  buildSettingKeyValue(unityDic,unityDebugDic,'ReleaseForRunning')
 # print(unityBuildSettingDic)
-# buildString = ''
-# for key in unityBuildSettingDic:
-#     pass
-    # print(key)
-    # print(unityBuildSettingDic[key])
-
 
 targetBuildSettingDic = buildSettingKeyValue(targetFileDic, targetDebugDic, 'Release')
-# print(targetBuildSettingDic)
+print(targetBuildSettingDic)
 
 def UnityKeyValueDic(dic: dict,key:str,buildProjectName:str):
   if dic.__contains__(buildProjectName + key):
@@ -219,7 +200,7 @@ def UnityKeyValueDic(dic: dict,key:str,buildProjectName:str):
   elif   dic.__contains__('Debug'+key):
       return dic['Debug'+key]
   elif dic.__contains__('PBXProject'+ buildProjectName + key):
-      return dic['PBXProject'+ buildProjectName + key] #'PBXProject'+ buildSettingName
+      return dic['PBXProject'+ buildProjectName + key]
   elif dic.__contains__('PBXProject'+ 'Debug' + key):
       return dic['PBXProject'+ 'Debug' + key]
   else:
@@ -275,13 +256,15 @@ def handleDicValue(handleKey):
                 else:
                     stringM = stringM+'/'+ array[i]
             headString = stringM
-         headSearchResult += headString + ','
+         if headString.strip() != '':
+            headSearchResult += headString + ','
     return headSearchResult
 
 headSearchResult = handleDicValue('HEADER_SEARCH_PATHS')
 headSearchResult.replace(')','')
 UnitybuildSettingLastDic['HEADER_SEARCH_PATHS'] = '(\n' +  headSearchResult + ')'
 UnitybuildSettingLastDic ['USER_HEADER_SEARCH_PATHS'] = '(\n' +  headSearchResult + ')'
+
 
 librarySearchString = handleDicValue('LIBRARY_SEARCH_PATHS')
 UnitybuildSettingLastDic['LIBRARY_SEARCH_PATHS'] = '(\n' + librarySearchString + ')'
@@ -304,16 +287,19 @@ for key in targetBuildSettingDic:
                 for tempString in tempArray:
                     # print(tempString)
                     if tempString.__contains__("\"\\\""):
-                        print(tempString)
+                        # print(tempString)
                         tempString = tempString.strip()
                         tempString = tempString[1:]
-                        print(tempString)
+                        # print(tempString)
                         tempString = tempString[:-1]
-                        print(tempString)
+                        # print(tempString)
                     elif tempString.__contains__("\""):
                         tempString = tempString.replace("\"", "\\\"")
                     resultString1 = resultString1+ ' ' +tempString.strip()+' '
+                # print(targetBuildSettingDic[key][:-1])
+                # print(key)
                 UnitybuildSettingLastDic[keystr] = targetBuildSettingDic[key][:-1] + resultString1 + '\"'
+                # print(targetBuildSettingDic['USER_HEADER_SEARCH_PATHS'])
                 # print(UnitybuildSettingLastDic[keystr])
             else:
             #     print(keystr)
@@ -325,7 +311,7 @@ for key in targetBuildSettingDic:
                 for string1 in tempArray:
                     if tempStringTarget.__contains__(string1):
                         pass
-                    else:
+                    elif tempStringTarget.strip() != '':
                         tempStringTarget = tempStringTarget + string1 + ',\n'
                 # print(tempStringTarget)
                 UnitybuildSettingLastDic[keystr] = '(\n' + tempStringTarget+ '\n' + ')'
@@ -339,7 +325,6 @@ for key in targetBuildSettingDic:
 for key in  UnitybuildSettingLastDic:
     if UnitybuildSettingLastDic[key].__contains__('(\n'):
         pass
-
 targetBuildSettingDic = UnitybuildSettingLastDic
 #重新构建
 
@@ -378,6 +363,8 @@ if reWriteBuildSettingResult:
             pass
         buildString += reWriteString + '\n'
     targetFileDic['XCBuildConfiguration'] = buildString
+
+
 
 resultString = ''
 for key in targetFileDic:
