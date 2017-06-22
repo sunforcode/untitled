@@ -17,7 +17,7 @@ projectTargetName = 'TestPythonUnity'
 targetFileDic = {}
 rootObjectString = ''
 
-PBXProjectPattern = re.compile('mainGroup = ([a-zA-Z0-9]{24}) ')
+PBXProjectPattern = re.compile('mainGroup = ([a-zA-Z0-9]{24})')
 # 打开目标的文件路径并格式化
 with open(targetFilePath, 'r+') as targetFile:
     fileContent = targetFile.read()
@@ -192,7 +192,12 @@ unityBuildSettingDic =  buildSettingKeyValue(unityDic,unityDebugDic,'ReleaseForR
 # print(unityBuildSettingDic)
 
 targetBuildSettingDic = buildSettingKeyValue(targetFileDic, targetDebugDic, 'Release')
-print(targetBuildSettingDic)
+# print(targetBuildSettingDic)
+
+for key in targetBuildSettingDic :
+    print(key)
+    print(targetBuildSettingDic[key])
+
 
 def UnityKeyValueDic(dic: dict,key:str,buildProjectName:str):
   if dic.__contains__(buildProjectName + key):
@@ -263,7 +268,7 @@ def handleDicValue(handleKey):
 headSearchResult = handleDicValue('HEADER_SEARCH_PATHS')
 headSearchResult.replace(')','')
 UnitybuildSettingLastDic['HEADER_SEARCH_PATHS'] = '(\n' +  headSearchResult + ')'
-UnitybuildSettingLastDic ['USER_HEADER_SEARCH_PATHS'] = '(\n' +  headSearchResult + ')'
+# UnitybuildSettingLastDic ['USER_HEADER_SEARCH_PATHS'] = '(\n' +  headSearchResult + ')'
 
 
 librarySearchString = handleDicValue('LIBRARY_SEARCH_PATHS')
@@ -375,7 +380,7 @@ for key in targetFileDic:
 
 resultString = "// !$*UTF8*$!\n{\n\t\tarchiveVersion = 1;\n\tclasses = {\n\t};\n\tobjectVersion = 46;\n\tobjects = {"+resultString + "};\nrootObject = "+rootObjectString+" /* Project object */;\n}"
 with open(targetFilePath, "r+") as testProject:
-    testProject.truncate()
-    testProject.write(resultString)
+    # testProject.truncate()
+    # testProject.write(resultString)
     print('success')
     pass

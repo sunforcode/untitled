@@ -150,9 +150,9 @@ if PBXGroupResult:
     targetResultString = targetResultString.replace('SOURCE_ROOT', '\"<group>\"')
     targetFileDic['PBXGroup'] = targetResultString
 
+
+##----------------------------------------------------------------------------------------------------------------------
 ##增加文件
-
-
 unityFileString = unityDic['PBXBuildFile']
 # print(unityFileString)
 
@@ -200,7 +200,6 @@ if singleFileRefResult:
                         pass
                     elif spiltString.__contains__('path = Data/Raw/QCAR') or spiltString.__contains__('path = Data') or spiltString.__contains__('path = Data/Raw/Vuforia'):
                         spiltString = 'path = LoadAR/%s' % spiltString.split('=')[1].strip()
-                        print(spiltString)
                         pass
                     elif spiltString.__contains__('.app') :
                         pass
@@ -221,8 +220,10 @@ if singleFileRefResult:
                 single = single.replace('SOURCE_ROOT','\"<group>\"')
                 # print(single)
                 pass
-        unityFilerefenceResult = unityFilerefenceResult + '\t\t'+single + '\n'
+        if single.strip()!= '':
+            unityFilerefenceResult = unityFilerefenceResult + '\t\t'+single + '\n'
 unityDic['PBXFileReference'] = unityFilerefenceResult
+print(unityDic['PBXFileReference'])
 
 
 targetFileDic['PBXBuildFile'] = targetFileDic['PBXBuildFile'] + unityDic['PBXBuildFile']
@@ -598,14 +599,15 @@ def handleDicValue(handleKey):
                 else:
                     stringM = stringM+'/'+ array[i]
             headString = stringM
-         headSearchResult += headString + ','
+         if headString.strip() != '':
+            headSearchResult += headString + ','
     return headSearchResult
 
 headSearchResult = handleDicValue('HEADER_SEARCH_PATHS')
 headSearchResult.replace(')','')
 
 UnitybuildSettingLastDic['HEADER_SEARCH_PATHS'] = '(\n' +  headSearchResult + ')'
-UnitybuildSettingLastDic ['USER_HEADER_SEARCH_PATHS'] = '(\n' +  headSearchResult + ')'
+# UnitybuildSettingLastDic ['USER_HEADER_SEARCH_PATHS'] = '(\n' +  headSearchResult + ')'
 
 librarySearchString = handleDicValue('LIBRARY_SEARCH_PATHS')
 UnitybuildSettingLastDic['LIBRARY_SEARCH_PATHS'] = '(\n' + librarySearchString + ')'
