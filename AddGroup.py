@@ -1,14 +1,10 @@
 import re
 import string
 import tkinter.filedialog
+import Setting
 
-# filename=tkinter.filedialog.askopenfilename(filetypes=[("bmp格式","avi")])
-
-unityFilePath = '/Users/CharlyZhang/Desktop/XCode/Unity-iPhone.xcodeproj/project.pbxproj'
-targetFilePath = '/Users/CharlyZhang/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj/project.pbxproj'
-
-# unityFilePath = '/Users/sunyongji/Desktop/staturdayUnity/Unity-iPhone.xcodeproj/project.pbxproj'
-# targetFilePath = '/Users/sunyongji/Desktop/TestPythonUnity/TestPythonUnity.xcodeproj/project.pbxproj'
+unityFilePath = Setting.unityFilePath
+targetFilePath = Setting.targetFilePath
 
 # target的变量
 targetFileDic = {}
@@ -47,6 +43,7 @@ with open(unityFilePath, 'r') as f:
             if result1:
                 unityDic[str] = result1[0]
 
+
 #处理unityProject
     # unity的主分组
     PBXProjectPattern = re.compile('mainGroup = ([A-F0-9]{24})')
@@ -58,7 +55,6 @@ with open(unityFilePath, 'r') as f:
         UnityMaingroup = UnityMainGroupResult[0]
 
 
-        # print('UnityMaingroup'+UnityMaingroup)
     # PBXProjectString = targetFileDic['PBXProject']
     PBXGroupString = unityDic['PBXGroup']
     PBXGroupPattern = re.compile('([.\s\S]*?};)')
@@ -74,6 +70,11 @@ with open(unityFilePath, 'r') as f:
                 continue
             elif PBXGroupSingle.__contains__('/* Libraries */ = {'):
                 PBXGroupSingle = PBXGroupSingle.replace('path = Libraries;','path = LoadAR/Libraries;\n\t\t\t\tname = Libraries;\n')
+                UnityGroupString += PBXGroupSingle
+                pass
+            elif PBXGroupSingle.__contains__('/* Classes */ = {'):
+                PBXGroupSingle = PBXGroupSingle.replace('path = Classes;','path = LoadAR/Classes;\n\t\t\t\tname = Classes;\n')
+                # print(PBXGroupSingle)
                 UnityGroupString += PBXGroupSingle
                 pass
             elif PBXGroupSingle.__contains__('/* Classes */ = {'):
@@ -121,6 +122,6 @@ for key in targetFileDic:
 
 resultString = "// !$*UTF8*$!\n{\n\t\tarchiveVersion = 1;\n\tclasses = {\n\t};\n\tobjectVersion = 46;\n\tobjects = {"+resultString + "};\nrootObject = "+rootObjectString+" /* Project object */;\n}"
 with open(targetFilePath, "r+") as testProject:
-    testProject.truncate()
-    testProject.write(resultString)
+    # testProject.truncate()
+    # testProject.write(resultString)
     print('success')

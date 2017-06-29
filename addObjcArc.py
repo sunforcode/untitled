@@ -2,9 +2,9 @@ import re
 import string
 releaseResultID = ''
 date = ''
-filePath = '/Users/CharlyZhang/Desktop/0608_001/Unity-iPhone.xcodeproj/project.pbxproj'
+filePath = '/Users/CharlyZhang/Desktop/062702autoOrientetion062901/Unity-iPhone.xcodeproj/project.pbxproj'
 targetXcodePath = '/Users/CharlyZhang/Desktop/FounderAR606cao/E-Publishing.xcodeproj/project.pbxproj'
-arcXocdepath = '/Users/CharlyZhang/Desktop/FounderAR0608/E-Publishing.xcodeproj/project.pbxproj'
+arcXocdepath = '/Users/CharlyZhang/Git/OrangeCube/E-Publishing.xcodeproj/project.pbxproj'
 allMFileNames = []
 
 with open(filePath, 'r+') as targetFile:
