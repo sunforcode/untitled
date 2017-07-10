@@ -57,6 +57,7 @@ with open(unityFilePath, 'r') as f:
 
     # PBXProjectString = targetFileDic['PBXProject']
     PBXGroupString = unityDic['PBXGroup']
+    PBXChildPattern = re.compile('children = (\([.\s\S]*?)\);')
     PBXGroupPattern = re.compile('([.\s\S]*?};)')
     PBXGroupResult = PBXGroupPattern.findall(PBXGroupString)
     # print(UnityMaingroup)
@@ -65,6 +66,21 @@ with open(unityFilePath, 'r') as f:
             if PBXGroupSingle.__contains__(UnityMaingroup):
                 # print(PBXGroupSingle)
                 PBXGroupSingle = PBXGroupSingle.replace("name = CustomTemplate;","name = LoadAR;")
+                handleString = ''
+                for single in  PBXChildPattern.findall(PBXGroupSingle)[0].split(','):
+                    # print(single)
+                    if single.__contains__('/* libiconv.2.dylib */') or single.__contains__('/* Frameworks */') or single.__contains__('.xcassets') or single.__contains__('Unity-iPhone Tests') or single.__contains__('Products') or single.__contains__('Info.plist')or single.__contains__('.xib') or single.__contains__('.png'):
+
+                        pass
+                    elif single.__contains__('/* libiconv.2.dylib */') or single.__contains__(
+                            '/* Security.framework */'):
+                        # 存储记录下来的框架
+                        pass
+                    else:
+                        if single.strip() != '':
+                           handleString += single + ','
+                PBXGroupSingle = PBXGroupSingle.split('children = (')[0] + 'children = ' + handleString+'\n\t\t\t)' +PBXGroupSingle.split(');')[1]
+
                 UnityGroupString += PBXGroupSingle
             elif PBXGroupSingle.__contains__('Unity-iPhone Tests'):
                 continue
@@ -95,15 +111,17 @@ with open(unityFilePath, 'r') as f:
         TargetMaingroup = PBXProjectResult[0]
     targetFileGroupString = targetFileDic['PBXGroup']
     PBXGroupPattern = re.compile('([.\s\S]*?};)')
+    loadArPattern = re.compile('([A-F0-9]{24} /\* LoadAR \*/,)')
     PBXGroupResult = PBXGroupPattern.findall(targetFileGroupString)
     if PBXGroupResult:
         for PBXGroupSingle in PBXGroupResult:
             containMain = PBXGroupSingle.__contains__(TargetMaingroup)
-            containLoadAR = not PBXGroupSingle.__contains__('LoadAR')
-            if (containMain and containLoadAR):
-                # print(UnityMaingroup)
+            containLoadAR =  PBXGroupSingle.__contains__('LoadAR')
+            if containMain:
+                if containLoadAR:
+                    PBXGroupSingle = PBXGroupSingle.replace('loadArPattern.findall(PBXGroupSingle)[0]','')#将LoadAR删除掉
+                    pass
                 PBXGroupSingle = PBXGroupSingle.split('children = (')[0] + 'children = (\n' + '\t\t\t\t'+UnityMaingroup+' /* LoadAR */,' + PBXGroupSingle.split('children = (')[1] + '\n' +unityDic['PBXGroup']
-                # print(PBXGroupSingle)
                 targetResultString += PBXGroupSingle
             else:
                 targetResultString += PBXGroupSingle
@@ -120,7 +138,7 @@ for key in targetFileDic:
     content = targetFileDic[key]
     resultString =resultString + begin + content + end
 
-resultString = "// !$*UTF8*$!\n{\n\t\tarchiveVersion = 1;\n\tclasses = {\n\t};\n\tobjectVersion = 46;\n\tobjects = {"+resultString + "};\nrootObject = "+rootObjectString+" /* Project object */;\n}"
+resultString = "// !$*UTF8*$!\n{\n\t\tarchiveVersion = 1;\n\tclasses = {\n\t};\n\tobjectVersion = 46;\n\tobjects = {"+resultString + "};\nrootObject = "+'2D8467DE1F0C77B80048CE96'+" /* Project object */;\n}"
 with open(targetFilePath, "r+") as testProject:
     # testProject.truncate()
     # testProject.write(resultString)

@@ -1,22 +1,16 @@
-import random
-lowString = 'abcdefghijklmnopqrstuvwxyz'
-upString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-num = '0123456789'
-allArray = lowString+upString+num
-times = int(input('请输入次数'))
-def setUpRandomNum(k,arrayStr = []):
-    x = random.sample(allArray,8)
-    a = len(list(set(x).intersection(set(lowString)))) > 0
-    b = len(list(set(x).intersection(set(upString)))) > 0
-    c = len(list(set(x).intersection(set(num))))>0
-    d = not (k in arrayStr)
-    if a and b and c and d:
-        k = k-1
-        arrayStr.append(''.join(x))
-    if k == 0:
-        return arrayStr
-    else:
-        return setUpRandomNum(k,arrayStr)
+json_str={
+   "1":["小花",99,100,98.5],
+   "2":["小王",90,30.5,95],
+   "3":["小明",67.5,49.6,88]
+}
+arrayM = []
+for key in  json_str:
+    tempArray = []
+    tempArray.append(key)
+    tempArray.append(json_str[key])
+    arrayM.append(tempArray)
+# print(arrayM)
 
-print(setUpRandomNum(times))
 
+String = '123'
+print(String.replace('1','2'))

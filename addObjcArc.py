@@ -2,7 +2,7 @@ import re
 import string
 releaseResultID = ''
 date = ''
-filePath = '/Users/CharlyZhang/Desktop/062702autoOrientetion062901/Unity-iPhone.xcodeproj/project.pbxproj'
+filePath = '/Users/CharlyZhang/Desktop/FounderARDemo0706/Unity-iPhone.xcodeproj/project.pbxproj'
 targetXcodePath = '/Users/CharlyZhang/Desktop/FounderAR606cao/E-Publishing.xcodeproj/project.pbxproj'
 arcXocdepath = '/Users/CharlyZhang/Git/OrangeCube/E-Publishing.xcodeproj/project.pbxproj'
 allMFileNames = []
@@ -131,7 +131,6 @@ for key in targetDic:
 
 resultString = "// !$*UTF8*$!\n{\n\t\tarchiveVersion = 1;\n\tclasses = {\n\t};objectVersion = 46;\n\tobjects = {\n\t"+resultString + "};\nrootObject = 29B97313FDCFA39411CA2CEA /* Project object */;\n}"
 with open(arcXocdepath, "r+") as testProject:
-    print(resultString)
     testProject.truncate()
     testProject.write(resultString)
     print('success')
