@@ -12,5 +12,13 @@ for key in  json_str:
 # print(arrayM)
 
 
-String = '123'
-print(String.replace('1','2'))
+# String = '123'
+# print(String.replace('1','2'))
+
+def is_back(s):
+    return s[::-1]==(s if s.strip() else False)
+
+print( is_back('heh'))
+print('hello'[::-1])
+import  time
+print( time.localtime(time.time()))

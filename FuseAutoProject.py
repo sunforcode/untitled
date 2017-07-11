@@ -2,14 +2,17 @@ import re
 import string
 import  os
 import shutil
+import time
 
-unityPath = '/Users/CharlyZhang/Desktop/FounderARDemo0706/Unity-iPhone.xcodeproj'
-targetPath = '/Users/CharlyZhang/Desktop/OrangeCube/E-Publishing.xcodeproj'
+unityPath = '/Users/CharlyZhang/Desktop/FounderARDemo07107/Unity-iPhone.xcodeproj'
+targetPath = '/Users/CharlyZhang/Git/OrangeCube/E-Publishing.xcodeproj'
 
 targetName = 'FounderReader'
 
 unityFilePath = unityPath + '/project.pbxproj'
 targetFilePath = targetPath + '/project.pbxproj'
+
+removePath = targetPath + '/remove'+'/project.pbxproj'
 
 targetProjectName = 'FounderReader'
 unityProjectName = 'Unity-iPhone'
@@ -58,6 +61,7 @@ def CopyAPPController(path: string):
 CopyFiles(unityPath,targetPath)
 CopyAPPController(targetPath)
 
+
 ## 打开两个文件
 targetFileDic = {}
 with open(targetFilePath, 'r+') as targetFile:
@@ -90,6 +94,23 @@ with open(unityFilePath, 'r') as f:
             if result1:
                 unityDic[str] = result1[0]
 
+removeFileContent = ''
+removeFileDic = {}
+
+with open(removePath,'r') as f:
+    removeFileContent = f.read()
+    UnityPattersn = re.compile(sectionPattern)
+    UnityResult = UnityPattersn.findall(UnityFileContent)
+    if UnityResult:
+        for str in UnityResult:
+            s = '/\* Begin %s section \*/([.\s\S]*)/\* End %s section \*/' % (str, str)
+            pattersn1 = re.compile(s)
+            result1 = pattersn1.findall(UnityFileContent)
+            if result1:
+                removeFileDic[str] = result1[0]
+print(removeFileDic)
+
+
 ## 获取主RootObject
 rootObjectString = ''
 rootobjectPattern = re.compile('rootObject = ([a-zA-Z0-9]*) /\*')
@@ -107,7 +128,6 @@ if UnityMainGroupResult:
     UnityMaingroup = UnityMainGroupResult[0]
 
 
-# PBXProjectString = targetFileDic['PBXProject']
 PBXGroupString = unityDic['PBXGroup']
 PBXChildPattern = re.compile('children = (\([.\s\S]*?)\);')
 PBXGroupPattern = re.compile('([.\s\S]*?};)')
@@ -121,7 +141,6 @@ if PBXGroupResult:
                 if single.__contains__('.xcassets') or single.__contains__('Unity-iPhone Tests') or single.__contains__('Products') or single.__contains__('Info.plist')or single.__contains__('.xib') or single.__contains__('.png'):
                     pass
                 elif single.__contains__('/* libiconv.2.dylib */') or single.__contains__('/* Security1.framework */'):
-                    #存储记录下来的框架
                     pass
                 else:
                     if single.strip() != '':
@@ -142,9 +161,9 @@ if PBXGroupResult:
             pass
         else:
             UnityGroupString += PBXGroupSingle
+    UnityGroupString = UnityGroupString.replace('*/ =', 'unityFlag */ =')
     unityDic['PBXGroup'] = UnityGroupString
 
-# PBXProject 获取主目录的ID 2D9A4B551EDE903E000D8470
 targetResultString = ''
 PBXProjectString = targetFileDic['PBXProject']
 PBXProjectResult = PBXProjectPattern.findall(PBXProjectString)
@@ -168,14 +187,13 @@ if PBXGroupResult:
         elif PBXGroupSingle.__contains__('/* UnityClasses */ = {') or PBXGroupSingle.__contains__('/* UnityAds */ = {') or PBXGroupSingle.__contains__('/* PluginBase */ = {') \
                 or PBXGroupSingle.__contains__('/* UI */ = {') or PBXGroupSingle.__contains__('/* Unity */ = {') \
                 or PBXGroupSingle.__contains__('/* Native */ = {') or PBXGroupSingle.__contains__('/* Libraries */ = {') or PBXGroupSingle.__contains__('/* Plugins */ = {')\
-                or PBXGroupSingle.__contains__('/* iOS */ = {'):
+                or PBXGroupSingle.__contains__('/* iOS */ = {') or PBXGroupSingle.__contains__('unityFlag') :
             pass
         else:
             targetResultString += PBXGroupSingle
             pass
     # targetResultString =  targetResultString.replace('SOURCE_ROOT','\"<group>\"')
     targetFileDic['PBXGroup'] = targetResultString
-# print(targetFileDic['PBXGroup'])
 
 
 ##----------------------------------------------------------------------------------------------------------------------
@@ -207,7 +225,6 @@ if singlePatternResult:
                 fileRefResult = fileRefResult + '\t\t' + single.replace('*/', 'unityFlag */') + '\n'
                 pass
 unityDic['PBXBuildFile'] = fileRefResult
-# print(fileRefResult)
 
 
 unityFileRefence = unityDic['PBXFileReference']
@@ -277,12 +294,22 @@ if singlePattern.findall(targetPBXFileString):
             pass
 
 
+targetFileRefString = targetFileDic['PBXFileReference']
+targetFileRefLastString = ''
+if singlePattern.findall(targetFileRefString):
+    for singleString in singlePattern.findall(targetFileRefString):
+        if singleString.__contains__('unityFlag'):
+            pass
+        else:
+            targetFileRefLastString +=singleString
+            pass
+
+
 targetFileDic['PBXBuildFile'] = targetfileStringLast + unityDic['PBXBuildFile']
-targetFileDic['PBXFileReference'] = targetFileDic['PBXFileReference'] + unityDic['PBXFileReference']
+targetFileDic['PBXFileReference'] = targetFileRefLastString + unityDic['PBXFileReference']
 
 
 #-------------------------------------------------分割线
-##增加shellScriptPattern
 shellScriptIDPattern = re.compile('[A-Z0-9]{24}')
 shellScriptStringId = ''
 shellScriptPattern = re.compile('([0-9A-F]{24} /\* ShellScript \*/,)')
@@ -343,12 +370,12 @@ UnityFrameWrokFinalString = ''
 unityFrameWorkstring = ''
 frameWorkResult = UnityFrameWorkPattern.findall(UnityFrameworkString)
 if frameWorkResult:
-    # UnityFrameWorkNameArray = frameWorkResult[0].split(',')
     unityFrameWorkstring = frameWorkResult[0]
     for singleFrameWork in frameWorkResult[0].split(','):
         if singleFrameWork.__contains__('.a'):
-            UnityFrameWrokFinalString = UnityFrameWrokFinalString + singleFrameWork.replace('*/', 'unityFlag */')+','
-# print(UnityFrameWrokFinalString)
+            UnityFrameWrokFinalString = UnityFrameWrokFinalString + singleFrameWork+','
+UnityFrameWorkNameArray = singleFrameWorkPattern.findall(UnityFrameWrokFinalString)
+# print(UnityFrameWorkNameArray)
 
 frameWorkResultString = ''
 frameworkResultLast = ''
@@ -362,18 +389,17 @@ if singleResult:
             if result2:
                 for singleFrameWork in result2[0].split(','):
                     # print(singleFrameWork)
-                    if singleFrameWork.__contains__('unityFlag'):
-                        # print(singleFrameWork)
-                        singleFrameWork = ''
-                    elif singleFrameWork.strip() != '':
-                        tagetFrameReplaceString = tagetFrameReplaceString + singleFrameWork + ','
-                    else:
-                        pass
+                    if singleFrameWork.strip()!= '':
+                        if singleFrameWorkPattern.findall(singleFrameWork)[0].strip() in UnityFrameWorkNameArray:
+                           singleFrameWork = ''
+                        elif singleFrameWork.strip() != '':
+                            tagetFrameReplaceString = tagetFrameReplaceString + singleFrameWork + ','
+                        else:
+                             pass
                 single = single.split('files = (')[0] + 'files = (\n' + '\t\t\t\t' +UnityFrameWrokFinalString +tagetFrameReplaceString + '\t\t\t);\n'+'\t\t\t\trunOnlyForDeploymentPostprocessing = 0;\n'+'\t\t};\n' + '\n'
         frameworkResultLast += single
 targetFileDic['PBXFrameworksBuildPhase'] = frameworkResultLast
 # print(frameworkResultLast)
-
 ## 获取unity的resource内容
 unityResourceString = unityDic['PBXResourcesBuildPhase']
 resourceResult = NativeTargetPattern.findall(unityResourceString)
@@ -451,6 +477,10 @@ if targetSourceResult:
 targetFileDic['PBXSourcesBuildPhase'] = targetSourcelastString
 
 
+#删除无用的文件
+# /Users/CharlyZhang/Desktop/testAUTO/OrangeCube/LoadAR/Data/Raw/AVProVideoSamples
+
+
 
 # 重新写入文件中
 resultString = ''
@@ -464,5 +494,6 @@ resultString = "// !$*UTF8*$!\n{\n\t\tarchiveVersion = 1;\n\tclasses = {\n\t};\n
 with open(targetFilePath, "r+") as testProject:
     testProject.truncate()
     testProject.write(resultString)
-    print('success')
+    print('success' )
+    print(time.time())
 
