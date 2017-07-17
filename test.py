@@ -1,24 +1,15 @@
-json_str={
-   "1":["小花",99,100,98.5],
-   "2":["小王",90,30.5,95],
-   "3":["小明",67.5,49.6,88]
-}
-arrayM = []
-for key in  json_str:
-    tempArray = []
-    tempArray.append(key)
-    tempArray.append(json_str[key])
-    arrayM.append(tempArray)
-# print(arrayM)
+import os
 
+os.system('chmod -R 777 /Users/CharlyZhang/Git/OrangeCube/LoadAR/MapFileParser.sh')
 
-# String = '123'
-# print(String.replace('1','2'))
+# import console
 
-def is_back(s):
-    return s[::-1]==(s if s.strip() else False)
-
-print( is_back('heh'))
-print('hello'[::-1])
-import  time
-print( time.localtime(time.time()))
+# import copy
+# nums=[1,1,1,2,2,3,4,5,6,6,7,8]
+# new_nums=copy.deepcopy(nums)
+# for n in nums:
+#     if n%2==0:
+#         new_nums.remove(n)
+# print(new_nums)
+import random
+print( random.sample([123,12,1,2],3))
